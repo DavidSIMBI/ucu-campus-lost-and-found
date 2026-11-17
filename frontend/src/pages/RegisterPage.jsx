@@ -1,35 +1,43 @@
+
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { api } from '../services/api.js';
+import { useAuth } from '../context/AuthContext.jsx';
 
 export default function RegisterPage() {
+  const { register } = useAuth();
   const navigate = useNavigate();
-  const [form, setForm] = useState({ fullName: '', email: '', password: '' });
+
+  const [fullName, setFullName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-
-  function handleChange(event) {
-    setForm((current) => ({ ...current, [event.target.name]: event.target.value }));
-  }
 
   async function handleSubmit(event) {
     event.preventDefault();
     setError('');
-    if (form.fullName.trim().length < 2) return setError('Enter your full name.');
-    if (!/^\S+@\S+\.\S+$/.test(form.email.trim())) return setError('Enter a valid email address.');
-    if (form.password.length < 8) return setError('Use a password with at least 8 characters.');
+
+    if (password.length < 8) {
+      setError('Password must contain at least 8 characters.');
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setError('Passwords do not match.');
+      return;
+    }
 
     setLoading(true);
+
     try {
-      const { data } = await api.post('/auth/register', {
-        ...form, fullName: form.fullName.trim(), email: form.email.trim().toLowerCase(),
-      });
-      localStorage.setItem('token', data.token);
-      localStorage.setItem('user', JSON.stringify(data.user));
-      window.dispatchEvent(new Event('auth-change'));
-      navigate('/');
+      await register(fullName, email, password);
+      navigate('/', { replace: true });
     } catch (err) {
-      setError(err.response?.data?.message || 'Could not reach the server. Check that the backend is running, then try again.');
+      setError(
+        err.response?.data?.message ||
+        'Registration failed. Please try again.'
+      );
     } finally {
       setLoading(false);
     }
@@ -38,17 +46,84 @@ export default function RegisterPage() {
   return (
     <section className="auth-page">
       <div className="auth-panel">
-        <p className="section-label">For UCU students and staff</p>
+        <p className="section-label">Join the UCU community</p>
         <h1>Create account</h1>
-        <p className="page-intro">Create an account to report lost or found items and follow your claims.</p>
-        <form onSubmit={handleSubmit} noValidate>
-          {error && <p className="form-error" role="alert">{error}</p>}
-          <label>Full name<input name="fullName" type="text" autoComplete="name" placeholder="Your name" value={form.fullName} onChange={handleChange} /></label>
-          <label>Email address<input name="email" type="email" autoComplete="email" placeholder="name@ucu.ac.ug" value={form.email} onChange={handleChange} /></label>
-          <label>Password<input name="password" type="password" autoComplete="new-password" placeholder="At least 8 characters" value={form.password} onChange={handleChange} /></label>
-          <button className="button" type="submit" disabled={loading}>{loading ? 'Creating account...' : 'Create account'}</button>
+
+        <p className="page-intro">
+          Register to report and find lost belongings on campus.
+        </p>
+
+        {error && (
+          <p className="form-error" role="alert">
+            {error}
+          </p>
+        )}
+
+        <form onSubmit={handleSubmit}>
+          <label>
+            Full name
+            <input
+              type="text"
+              value={fullName}
+              onChange={(event) => setFullName(event.target.value)}
+              autoComplete="name"
+              placeholder="Your full name"
+              minLength={2}
+              maxLength={120}
+              required
+            />
+          </label>
+
+          <label>
+            UCU email address
+            <input
+              type="email"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              autoComplete="email"
+              placeholder="name@example.com"
+              required
+            />
+          </label>
+
+          <label>
+            Password
+            <input
+              type="password"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              autoComplete="new-password"
+              minLength={8}
+              maxLength={128}
+              placeholder="Create a password"
+              required
+            />
+          </label>
+
+          <label>
+            Confirm password
+            <input
+              type="password"
+              value={confirmPassword}
+              onChange={(event) => setConfirmPassword(event.target.value)}
+              autoComplete="new-password"
+              placeholder="Enter password again"
+              required
+            />
+          </label>
+
+          <button
+            className="button"
+            type="submit"
+            disabled={loading}
+          >
+            {loading ? 'Creating account...' : 'Create account'}
+          </button>
         </form>
-        <p className="auth-switch">Already registered? <Link to="/login">Log in</Link></p>
+
+        <p className="auth-switch">
+          Already registered? <Link to="/login">Log in</Link>
+        </p>
       </div>
     </section>
   );
