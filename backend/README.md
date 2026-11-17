@@ -1,5 +1,5 @@
 # Backend
 
-This folder will contain the Node.js and Express application.
+Node.js and Express API foundation. Install dependencies with `npm install`, copy `.env.example` to `.env`, then run `npm run dev`. The API health check is `GET /api/health`.
 
-The team will add the API, authentication, validation and application logic here after agreeing on the backend structure.
+Authentication, report, claim, and administration routes are placeholders. Database connection settings are ready in `src/config/database.js`, but the health route does not require MySQL.

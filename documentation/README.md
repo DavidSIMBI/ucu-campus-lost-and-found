@@ -1,8 +1,8 @@
 # Documentation
 
-This folder will contain the project documents, such as:
-- Requirements and user needs
-- Screen sketches and design
-- Team task allocation and meeting notes
-- Testing evidence
-- Final project report and presentation
+Project documents:
+- [Requirements](requirements.md)
+- [Database design](database-design.md)
+- [Team workflow](team-workflow.md)
+
+Add screen sketches, meeting notes, testing evidence, and the final report here as the group develops them.

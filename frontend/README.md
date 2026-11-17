@@ -1,5 +1,5 @@
 # Frontend
 
-This folder will contain the React application.
+React and Vite user interface for the UCU Campus Lost and Found System. Install with `npm install` and run the development server with `npm run dev`.
 
-The team will add the pages and components here after agreeing on the design and task allocation.
+The home page currently uses fictional sample listings. `src/services/api.js` contains the Axios client for future API requests.

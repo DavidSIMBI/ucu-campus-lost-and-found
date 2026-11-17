@@ -1,5 +1,3 @@
 # Database
 
-This folder is for planning and creating the MySQL database.
-
-The team will first agree on the data and relationships. The database diagram and SQL setup files can be added here later.
+MySQL starter schema and fictional seed records for users, reports, and claims. Run `schema.sql` first, then optionally `seed.sql`. See [database design](../documentation/database-design.md) for relationships and privacy rules.
