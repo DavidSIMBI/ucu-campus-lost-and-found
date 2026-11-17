@@ -24,8 +24,12 @@ export default function LoginPage() {
 
     setLoading(true);
     try {
-      const { data } = await api.post('/auth/login', form);
+      const { data } = await api.post('/auth/login', {
+        email: form.email.trim().toLowerCase(), password: form.password,
+      });
       localStorage.setItem('token', data.token);
+      localStorage.setItem('user', JSON.stringify(data.user));
+      window.dispatchEvent(new Event('auth-change'));
       navigate('/');
     } catch (err) {
       setError(
