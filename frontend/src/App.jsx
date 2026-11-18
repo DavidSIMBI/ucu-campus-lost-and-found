@@ -7,6 +7,8 @@ import BrowsePage from './pages/BrowsePage.jsx';
 import LoginPage from './pages/LoginPage.jsx';
 import RegisterPage from './pages/RegisterPage.jsx';
 import ReportPage from './pages/ReportPage.jsx';
+import MyReportsPage from './pages/MyReportsPage.jsx';
+import EditReportPage from './pages/EditReportPage.jsx';
 
 import { useAuth } from './context/AuthContext.jsx';
 
@@ -109,6 +111,26 @@ export default function App() {
           element={
             <ProtectedRoute>
               <ReportPage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Protected list of the authenticated user's reports */}
+        <Route
+          path="/my-reports"
+          element={
+            <ProtectedRoute>
+              <MyReportsPage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Protected report editing page */}
+        <Route
+          path="/my-reports/:id/edit"
+          element={
+            <ProtectedRoute>
+              <EditReportPage />
             </ProtectedRoute>
           }
         />

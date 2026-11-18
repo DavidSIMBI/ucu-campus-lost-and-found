@@ -28,6 +28,10 @@ export default function Navbar() {
             <NavLink to="/account">My Account</NavLink>
           )}
 
+          {isAuthenticated && user?.role === 'STUDENT' && (
+            <NavLink to="/my-reports">My Reports</NavLink>
+          )}
+
           {isAdmin && (
             <NavLink to="/admin">Admin Dashboard</NavLink>
           )}
