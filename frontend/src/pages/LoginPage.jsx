@@ -18,8 +18,11 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      await login(email, password);
-      navigate('/', { replace: true });
+      const response = await login(email, password);
+      const destination = response.user?.role === 'ADMIN'
+        ? '/admin/dashboard'
+        : '/';
+      navigate(destination, { replace: true });
     } catch (err) {
       setError(
         err.response?.data?.message ||

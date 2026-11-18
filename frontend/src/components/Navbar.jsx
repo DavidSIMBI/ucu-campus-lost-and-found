@@ -33,7 +33,7 @@ export default function Navbar() {
           )}
 
           {isAdmin && (
-            <NavLink to="/admin">Admin Dashboard</NavLink>
+            <NavLink to="/admin/dashboard">Admin Dashboard</NavLink>
           )}
         </div>
 

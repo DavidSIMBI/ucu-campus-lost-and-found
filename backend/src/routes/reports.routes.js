@@ -383,7 +383,7 @@ router.put('/:id', async (request, response, next) => {
         FROM claims
         WHERE report_id = ? AND status IN ('PENDING', 'APPROVED')
         LIMIT 1
-        FOR UPDATE
+        FOR SHARE
       `,
       [reportId]
     );

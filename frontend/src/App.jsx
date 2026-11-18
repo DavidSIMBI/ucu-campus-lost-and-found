@@ -9,6 +9,7 @@ import RegisterPage from './pages/RegisterPage.jsx';
 import ReportPage from './pages/ReportPage.jsx';
 import MyReportsPage from './pages/MyReportsPage.jsx';
 import EditReportPage from './pages/EditReportPage.jsx';
+import AdminDashboardPage from './pages/AdminDashboardPage.jsx';
 
 import { useAuth } from './context/AuthContext.jsx';
 
@@ -56,26 +57,6 @@ function AccountPage() {
 
       <p className="page-intro">
         You are logged in as {user.role}.
-      </p>
-
-      <button className="button" onClick={logout}>
-        Log out
-      </button>
-    </section>
-  );
-}
-
-// Administrator dashboard placeholder
-function AdminPage() {
-  const { user, logout } = useAuth();
-
-  return (
-    <section className="browse-page section-shell">
-      <p className="section-label">Administration</p>
-      <h1>Admin dashboard</h1>
-
-      <p className="page-intro">
-        Welcome, {user.fullName}. You have administrator access.
       </p>
 
       <button className="button" onClick={logout}>
@@ -140,7 +121,15 @@ export default function App() {
           path="/admin"
           element={
             <AdminRoute>
-              <AdminPage />
+              <Navigate to="/admin/dashboard" replace />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/admin/dashboard"
+          element={
+            <AdminRoute>
+              <AdminDashboardPage />
             </AdminRoute>
           }
         />
