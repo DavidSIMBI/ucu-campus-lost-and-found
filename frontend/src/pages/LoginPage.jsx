@@ -1,36 +1,29 @@
+
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { api } from '../services/api.js';
+import { useAuth } from '../context/AuthContext.jsx';
 
 export default function LoginPage() {
+  const { login } = useAuth();
   const navigate = useNavigate();
-  const [form, setForm] = useState({ email: '', password: '' });
+
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-
-  const handleChange = (event) =>
-    setForm({ ...form, [event.target.name]: event.target.value });
 
   async function handleSubmit(event) {
     event.preventDefault();
     setError('');
-
-    if (!/^\S+@\S+\.\S+$/.test(form.email)) {
-      return setError('Enter a valid email address, for example name@example.com.');
-    }
-    if (!form.password) {
-      return setError('Enter your password.');
-    }
-
     setLoading(true);
+
     try {
-      const { data } = await api.post('/auth/login', form);
-      localStorage.setItem('token', data.token);
-      navigate('/');
+      await login(email, password);
+      navigate('/', { replace: true });
     } catch (err) {
       setError(
         err.response?.data?.message ||
-          'Could not reach the server. Check that the backend is running, then try again.'
+        'Login failed. Please try again.'
       );
     } finally {
       setLoading(false);
@@ -42,30 +35,53 @@ export default function LoginPage() {
       <div className="auth-panel">
         <p className="section-label">Welcome back</p>
         <h1>Log in</h1>
-        <p className="page-intro">Log in to report items and follow your claims.</p>
+        <p className="page-intro">
+          Sign in to access the UCU Campus Lost and Found platform.
+        </p>
 
-        <form onSubmit={handleSubmit} noValidate>
-          {error && <p className="form-error" role="alert">{error}</p>}
+        {error && (
+          <p className="form-error" role="alert">
+            {error}
+          </p>
+        )}
 
+        <form onSubmit={handleSubmit}>
           <label>
             Email address
-            <input type="email" name="email" autoComplete="email"
-              placeholder="name@example.com" value={form.email} onChange={handleChange} />
+            <input
+              type="email"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              autoComplete="email"
+              placeholder="name@example.com"
+              required
+            />
           </label>
 
           <label>
             Password
-            <input type="password" name="password" autoComplete="current-password"
-              placeholder="Enter your password" value={form.password} onChange={handleChange} />
+            <input
+              type="password"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              autoComplete="current-password"
+              placeholder="Enter your password"
+              required
+            />
           </label>
 
-          <button className="button" type="submit" disabled={loading}>
+          <button
+            className="button"
+            type="submit"
+            disabled={loading}
+          >
             {loading ? 'Logging in...' : 'Log in'}
           </button>
         </form>
 
         <p className="auth-switch">
-          New to the service? <Link to="/register">Create an account</Link>
+          New to the service?{' '}
+          <Link to="/register">Create an account</Link>
         </p>
       </div>
     </section>
