@@ -35,7 +35,7 @@ export default function BrowsePage() {
       {/* Notice we removed `value={query}` and `onChange` because they are inside `filters` now */}
       <SearchBar filters={filters} onFilterChange={updateFilter} />
       
-      <p className="sample-note"><span aria-hidden="true">ⓘ</span> Demonstration content only; no records are loaded from the database.</p>
+      <p className="sample-note">Demonstration content only; no records are loaded from the database.</p>
       
       {results.length ? (
         <div className="item-grid">

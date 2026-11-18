@@ -4,7 +4,7 @@ export default function SearchBar({ filters = {}, onFilterChange = () => {} }) {
       
       {/* Keyword Search */}
       <label className="search-box" style={{ flex: '1 1 100%' }}>
-        <span className="search-icon" aria-hidden="true">🔍</span>
+        
         <span className="visually-hidden">Search items</span>
         <input 
           type="text" 
