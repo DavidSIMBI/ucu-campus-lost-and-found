@@ -32,3 +32,48 @@
 .report-submit{justify-self:start;min-width:170px}
 
 @media(max-width:640px){.report-page{padding-top:40px;padding-bottom:58px}.report-form{grid-template-columns:minmax(0,1fr);gap:18px;padding:20px}.report-field-wide,.report-feedback{grid-column:auto}.report-submit{width:100%}}
+
+.my-reports-page{padding-top:56px;padding-bottom:80px}
+.my-reports-header{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;margin-bottom:30px}
+.my-reports-header h1{margin-bottom:10px;font-family:Manrope,'DM Sans',sans-serif;font-size:40px;font-weight:600;letter-spacing:-.045em}
+.my-reports-header .page-intro{margin-bottom:0}
+.my-reports-create{flex:0 0 auto}
+.my-reports-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:28px}
+.my-reports-stat{display:flex;min-height:100px;flex-direction:column;justify-content:space-between;padding:17px 18px;border:1px solid var(--line);border-radius:5px;background:#fff}
+.my-reports-stat span{color:var(--muted);font-size:12px;font-weight:600}
+.my-reports-stat strong{color:var(--green);font-family:Manrope,sans-serif;font-size:28px;font-weight:700;line-height:1}
+.my-reports-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.my-report-card{min-width:0;padding:20px;border:1px solid var(--line);border-radius:5px;background:#fff}
+.my-report-card-topline{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px}
+.my-report-type,.my-report-status{display:inline-flex;align-items:center;min-height:25px;padding:5px 8px;border-radius:3px;font-size:10px;font-weight:700;letter-spacing:.04em}
+.my-report-type-lost{background:#f5eddb;color:#806522}
+.my-report-type-found{background:#e7f0e8;color:#356344}
+.my-report-status-open{background:#e9f3eb;color:#2f6840}
+.my-report-status-returned{background:#e8eef5;color:#405f7b}
+.my-report-status-closed{background:#eef0ee;color:#58635c}
+.my-report-card h2,.my-reports-empty h2{margin:0 0 17px;font-family:Manrope,sans-serif;font-size:18px;font-weight:650;letter-spacing:-.02em;overflow-wrap:anywhere}
+.my-report-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 18px;margin:0}
+.my-report-fields div{min-width:0}
+.my-report-fields dt{margin-bottom:4px;color:var(--muted);font-size:10px;font-weight:600}
+.my-report-fields dd{margin:0;color:var(--ink);font-size:12px;line-height:1.45;overflow-wrap:anywhere}
+.my-report-card-actions{display:flex;justify-content:flex-end;margin-top:18px;padding-top:14px;border-top:1px solid #edf0ed}
+.edit-report-page .page-intro{margin-bottom:28px}
+.edit-report-state{padding:18px 20px;border:1px solid var(--line);border-radius:5px;background:var(--pale);color:var(--muted);font-size:13px}
+.edit-report-type{padding:12px 14px;border-left:3px solid var(--green);background:#edf3ef}
+.edit-report-type-label{color:var(--muted);font-size:11px;font-weight:700}
+.edit-report-type strong{color:var(--green);font-size:14px}
+.edit-report-type small,.report-field small{color:var(--muted);font-size:11px;line-height:1.5}
+.edit-report-actions{grid-column:1/-1;display:flex;align-items:center;gap:20px}
+.edit-report-cancel{border:0;background:transparent;padding:8px 0;color:var(--green);font:inherit;font-size:13px;font-weight:700;cursor:pointer}
+.edit-report-cancel:disabled{opacity:.55;cursor:not-allowed}
+.edit-report-page .report-error p{margin:0 0 12px}
+.my-reports-message,.my-reports-empty{padding:24px;border:1px solid var(--line);border-radius:5px;background:var(--pale);color:var(--ink)}
+.my-reports-message{display:flex;align-items:center;justify-content:space-between;gap:18px}
+.my-reports-message p,.my-reports-empty p{margin:0;color:var(--muted);font-size:13px;line-height:1.6}
+.my-reports-error{border-color:#e3b4b6;background:#fdf1f1}
+.my-reports-empty{text-align:center;padding:38px 24px}
+.my-reports-empty h2{margin-bottom:8px}
+.my-reports-empty .button{margin-top:20px}
+@media(max-width:850px){.my-reports-summary{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:640px){.my-reports-page{padding-top:40px;padding-bottom:58px}.my-reports-header{align-items:flex-start;flex-direction:column;margin-bottom:22px}.my-reports-header h1{font-size:34px}.my-reports-create{width:100%;justify-content:center}.my-reports-list{grid-template-columns:minmax(0,1fr)}.my-report-card{padding:17px}.edit-report-actions{align-items:stretch;flex-direction:column;gap:14px}.edit-report-cancel{text-align:center;padding:8px}}
+@media(max-width:380px){.my-report-fields{grid-template-columns:minmax(0,1fr)}}
