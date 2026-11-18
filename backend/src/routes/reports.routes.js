@@ -7,6 +7,44 @@ const router = Router();
 
 router.use(authenticate);
 
+function isValidEventDate(value) {
+  if (typeof value !== 'string') {
+    return false;
+  }
+
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+
+  if (!match) {
+    return false;
+  }
+
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+
+  if (year < 1000 || month < 1 || month > 12 || day < 1) {
+    return false;
+  }
+
+  const isLeapYear = year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0);
+  const daysInMonth = [
+    31,
+    isLeapYear ? 29 : 28,
+    31,
+    30,
+    31,
+    30,
+    31,
+    31,
+    30,
+    31,
+    30,
+    31
+  ];
+
+  return day <= daysInMonth[month - 1];
+}
+
 // GET ALL REPORTS
 router.get('/', async (request, response, next) => {
   try {
@@ -146,23 +184,18 @@ router.post('/', async (request, response, next) => {
     });
   }
 
-  if (
-    typeof eventDate !== 'string' ||
-    !/^\d{4}-\d{2}-\d{2}$/.test(eventDate) ||
-    Number.isNaN(Date.parse(`${eventDate}T00:00:00`)) ||
-    new Date(`${eventDate}T00:00:00`).toISOString().slice(0, 10) !== eventDate
-  ) {
+  if (!isValidEventDate(eventDate)) {
     return response.status(400).json({
       message: 'Enter a valid event date in YYYY-MM-DD format.'
     });
   }
 
   if (
-    typeof identifyingDetails !== 'string' ||
-    !identifyingDetails.trim()
+    reportType === 'FOUND' &&
+    (typeof identifyingDetails !== 'string' || !identifyingDetails.trim())
   ) {
     return response.status(400).json({
-      message: 'Private identifying details are required.'
+      message: 'Private identifying details are required for found reports.'
     });
   }
 
@@ -195,16 +228,18 @@ router.post('/', async (request, response, next) => {
       ]
     );
 
-    await connection.execute(
-      `
-        INSERT INTO report_private_details (
-          report_id,
-          identifying_details
-        )
-        VALUES (?, ?)
-      `,
-      [result.insertId, identifyingDetails.trim()]
-    );
+    if (reportType === 'FOUND') {
+      await connection.execute(
+        `
+          INSERT INTO report_private_details (
+            report_id,
+            identifying_details
+          )
+          VALUES (?, ?)
+        `,
+        [result.insertId, identifyingDetails.trim()]
+      );
+    }
 
     await connection.commit();
 

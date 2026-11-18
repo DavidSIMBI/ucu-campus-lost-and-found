@@ -6,6 +6,7 @@ import HomePage from './pages/HomePage.jsx';
 import BrowsePage from './pages/BrowsePage.jsx';
 import LoginPage from './pages/LoginPage.jsx';
 import RegisterPage from './pages/RegisterPage.jsx';
+import ReportPage from './pages/ReportPage.jsx';
 
 import { useAuth } from './context/AuthContext.jsx';
 
@@ -98,6 +99,16 @@ export default function App() {
           element={
             <ProtectedRoute>
               <AccountPage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Protected report creation page */}
+        <Route
+          path="/report"
+          element={
+            <ProtectedRoute>
+              <ReportPage />
             </ProtectedRoute>
           }
         />
