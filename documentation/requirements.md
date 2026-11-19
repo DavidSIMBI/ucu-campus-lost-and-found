@@ -11,11 +11,11 @@ The UCU Campus Lost and Found System gives the Uganda Christian University commu
 
 ## Foundation scope
 
-The current foundation provides a responsive React interface with home, browse, login, and registration screens; an Express API with a health check and placeholder route groups; and the initial MySQL schema. Listings currently shown in the frontend are fictional examples and are not database records.
+The current foundation provides a responsive React interface with home, browse, login, and registration screens; an Express API with a health check and student account registration; and the MySQL schema. Listings currently shown in the frontend are fictional examples and are not database records.
 
 ## Functional requirements for the complete project
 
-1. Users can register and sign in with an account role of student or administrator.
+1. Students can register an account. Sign-in and administrator account management are not implemented.
 2. Students can create lost and found reports with a title, description, category, location, and date.
 3. Public users can search and browse safe, non-sensitive report information.
 4. A student can submit a claim against a found report and provide private proof of ownership.
@@ -33,4 +33,4 @@ The current foundation provides a responsive React interface with home, browse, 
 
 ## Out of scope for this foundation
 
-Authentication, authorization, report CRUD, live database queries, claim submission/review, return workflows, file uploads, and production deployment are not implemented yet.
+Sign-in, authorization, report CRUD, live listing queries, claim submission/review, return workflows, file uploads, and production deployment are not implemented yet.

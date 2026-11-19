@@ -7,5 +7,6 @@ build/
 coverage/
 backend/storage/private/
 *.log
+backend/uploads/reports/
 .DS_Store
 Thumbs.db
