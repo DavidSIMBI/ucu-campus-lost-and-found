@@ -1,5 +1,11 @@
 # Backend
 
-Node.js and Express API. Install dependencies with `npm install`, copy `.env.example` to `.env`, set the database credentials and a long random `JWT_SECRET`, then run `npm run dev`. The API health check is `GET /api/health`.
+Node.js and Express API using MySQL through `mysql2/promise`. Install dependencies with `npm install`, copy `.env.example` to `.env`, set valid database credentials and a long random `JWT_SECRET`, then run `npm run dev`.
 
-Authentication uses `POST /api/auth/register` with `fullName`, `email`, and `password`, and `POST /api/auth/login` with `email` and `password`. Both return a bearer token and the public user profile. Passwords are stored as bcrypt hashes. Registration requires the `users` table from `../database/schema.sql` to exist; report, claim, and administration routes are still placeholders. The health route does not require MySQL.
+## Database setup
+
+From the repository root, run `mysql -u root -p < database/schema.sql` to create the database and tables. Optionally load fictional demo records with `mysql -u root -p ucu_lost_and_found < database/seed.sql`. The seed accounts have deliberately unusable password hashes.
+
+Set `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, and `DB_PASSWORD` in `backend/.env`. From this directory, run `npm run db:check` to execute a read-only query and verify the `mysql2` connection. The check exits nonzero and prints the connection error when MySQL is unavailable or credentials are invalid.
+
+The API health check is `GET /api/health`. Authentication uses `POST /api/auth/register` with `fullName`, `email`, and `password`, and `POST /api/auth/login` with `email` and `password`. Both return a bearer token and public user profile; passwords are stored as bcrypt hashes. The database details and integrity rules are in [`../documentation/database-design.md`](../documentation/database-design.md).
