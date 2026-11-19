@@ -5,5 +5,5 @@ export const sampleItems = [
   { id: 3, title: 'Introduction to Economics', description: 'Paperback textbook with handwritten notes.', report_type: 'FOUND', event_date: '2026-11-12', location: 'Touch of Class Restaurant', category: 'Books', status: 'RETURNED', tone: 'green' },
   { id: 4, title: 'Blue student jacket', description: 'Light blue jacket left near the hostel entrance.', report_type: 'LOST', event_date: '2026-11-15', location: 'Premium Hostel', category: 'Clothing', status: 'OPEN', tone: 'blue' },
   { id: 5, title: 'Unmarked lunch container', description: 'Small green lunch container with a snap lid.', report_type: 'FOUND', event_date: '2026-11-16', location: 'N5B', category: 'Other', status: 'RETURNED', tone: 'sand' },
-  { id: 6, title: 'USB flash drive', description: 'Black 16 GB flash drive on a silver key ring.', report_type: 'FOUND', event_date: '2026-11-10', location: 'Hamu Mukasa Library', category: 'Electronics', status: 'CLOSED', tone: 'green' },
+  { id: 6, title: 'USB flash drive', description: 'Black flash drive on a silver key ring.', report_type: 'FOUND', event_date: '2026-11-10', location: 'Hamu Mukasa Library', category: 'Electronics', status: 'CLOSED', tone: 'green' },
 ];

@@ -6,11 +6,11 @@ export default function SearchBar({ value, onChange, filters, onFilterChange = (
   };
 
   return (
-    <div className="browse-filters">
+    <div className={filters ? 'browse-filters' : 'browse-filters browse-filters-keyword-only'}>
       <label className="search-box">
         <span className="search-icon" aria-hidden="true">⌕</span>
         <span className="visually-hidden">Search items</span>
-        <input value={keyword} onChange={(event) => updateKeyword(event.target.value)} placeholder="Search by title, location, category..." />
+        <input value={keyword} onChange={(event) => updateKeyword(event.target.value)} placeholder="Search title, description, category, or location" />
       </label>
       {filters && <>
         <label className="filter-control">

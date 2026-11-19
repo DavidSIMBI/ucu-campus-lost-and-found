@@ -1,21 +1,28 @@
-const iconByCategory = { Electronics: '▣', Accessories: '◇', Books: '▤', Clothing: '◒' };
+const iconByCategory = { Keys: '⌘', Electronics: '▣', Accessories: '◇', Books: '▤', Clothing: '◒' };
 
 export default function ItemCard({ item }) {
-  const type = item.report_type ?? item.type?.toUpperCase();
-  const date = item.event_date ?? item.date;
-  const formattedDate = /^\d{4}-\d{2}-\d{2}$/.test(date ?? '') ? new Date(`${date}T00:00:00`).toLocaleDateString() : date;
-  const itemStatus = item.status?.toUpperCase();
+  const reportType = item.report_type ?? item.type?.toUpperCase();
+  const displayType = reportType === 'LOST' ? 'Lost' : reportType === 'FOUND' ? 'Found' : 'Report';
+  const rawDate = item.event_date ?? item.date;
+  const date = /^\d{4}-\d{2}-\d{2}$/.test(rawDate ?? '')
+    ? new Intl.DateTimeFormat(undefined, { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(`${rawDate}T00:00:00`))
+    : rawDate;
+  const status = item.status?.toUpperCase();
+
   return (
     <article className="item-card">
-      <div className={`item-art art-${item.tone}`} aria-hidden="true"><span>{iconByCategory[item.category] ?? '◈'}</span></div>
+      <div className={`item-art art-${item.tone ?? 'green'}`} aria-hidden="true"><span>{iconByCategory[item.category] ?? '◈'}</span></div>
       <div className="item-details">
-        <div className="item-topline"><span className={`status status-${type?.toLowerCase()}`}>{type}</span><span>{formattedDate}</span></div>
+        <div className="item-topline">
+          <span className={`status status-${reportType?.toLowerCase()}`}>{displayType}</span>
+          <time dateTime={item.event_date}>{date}</time>
+        </div>
         <h3>{item.title}</h3>
-        <p>{item.location}</p>
-        {itemStatus === 'OPEN' && <span className="item-status item-status-open">⚠️ Open</span>}
-        {itemStatus === 'RETURNED' && <span className="item-status item-status-returned">✅ Returned</span>}
-        {itemStatus === 'CLOSED' && <span className="item-status item-status-closed">Closed</span>}
+        <p className="item-location"><span aria-hidden="true">⌖</span> {item.location}</p>
         {item.description && <p className="item-description">{item.description}</p>}
+        {status === 'OPEN' && <span className="item-status item-status-open">Open</span>}
+        {status === 'RETURNED' && <span className="item-status item-status-returned">Returned</span>}
+        {status === 'CLOSED' && <span className="item-status item-status-closed">Closed</span>}
         <span className="category">{item.category}</span>
       </div>
     </article>
