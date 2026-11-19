@@ -1,20 +1,24 @@
 # Database design
 
-The starter schema uses MySQL and three core entities: `users`, `reports`, and `claims`. `report_private_details` and `claim_evidence` keep sensitive information separate from ordinary records.
+The schema uses MySQL and normalized core entities: `users`, `categories`, `reports`, and `claims`. `report_private_details` and `claim_evidence` keep sensitive information separate from ordinary records. `claim_status_history` provides an audit trail.
 
 ## Relationships
 
 - A **user** can create many **reports**. `reports.reporter_id` references `users.id`.
 - A **found report** can receive many **claims**. `claims.report_id` references `reports.id` and `claims.claimant_id` references the claimant in `users`.
 - A claim can optionally reference an administrator who reviewed it using `claims.reviewed_by`.
+- Each report belongs to a category; categories are normalized to keep listing filters consistent.
+- Every claim status change is recorded in `claim_status_history`.
 - A report can have one private detail row in `report_private_details`; the row is deleted if its report is deleted.
 - A claim can have one private evidence row in `claim_evidence`; the row is deleted if its claim is deleted.
 
 ```text
+categories 1 ─── * reports
 users 1 ─── * reports 1 ─── * claims * ─── 1 users (claimant)
   └────────────────────────────── * claims (reviewer, optional)
 reports 1 ─── 0..1 report_private_details
 claims  1 ─── 0..1 claim_evidence
+claims 1 ─── * claim_status_history
 ```
 
 ## Main tables
@@ -34,6 +38,14 @@ Stores recognition clues for a found item, such as a hidden mark or contents. Ke
 ### `claims`
 
 Stores claimant, report, claim status, and review metadata. The generated `approved_report_id` is set only for approved claims and has a unique index; MySQL therefore allows at most one approved claim per report. The database triggers require a found report, prevent the reporter claiming their own item, block claims after return, and require an approved claim before a report can be marked returned.
+
+### `categories`
+
+Stores the controlled vocabulary used for report classification. Deleting a category is restricted while reports still reference it.
+
+### `claim_status_history`
+
+Stores the previous and new status, actor, and timestamp for claim lifecycle changes. It supports traceability and reporting.
 
 ### `claim_evidence`
 

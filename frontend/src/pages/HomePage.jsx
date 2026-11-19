@@ -18,11 +18,14 @@ export default function HomePage() {
             <p className="hero-description">A shared place to report what you’ve lost, return what you’ve found, and help campus feel a little more connected.</p>
             <div className="hero-actions"><Link className="button button-gold" to="/items">Browse items <span aria-hidden="true">↗</span></Link><Link className="text-link" to="/register">Join the community</Link></div>
           </div>
-          <div className="hero-note" aria-label="A reminder that every item has a way home">
-            <span className="note-sun" aria-hidden="true">✳</span>
-            <p>Every item has<br />a way home.</p>
-            <span className="note-caption">UCU · Mukono</span>
-          </div>
+          <figure className="hero-visual">
+            <img
+              src="https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=1200&q=85"
+              alt="University students studying together"
+              onError={(event) => { event.currentTarget.hidden = true; }}
+            />
+            <figcaption><span>UCU COMMUNITY</span><strong>Good people help good things find their way home.</strong></figcaption>
+          </figure>
         </div>
         <div className="hero-bottom"><span>Find something. Leave something.</span><span>Scroll to explore ↓</span></div>
       </section>
