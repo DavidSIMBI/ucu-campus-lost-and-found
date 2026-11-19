@@ -3,7 +3,7 @@ import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 
 export default function Navbar() {
-  const { user, isAuthenticated, isAdmin, logout } = useAuth();
+  const { user, isAuthenticated, logout } = useAuth();
   const navigate = useNavigate();
 
   function handleLogout() {
@@ -29,11 +29,7 @@ export default function Navbar() {
           )}
 
           {isAuthenticated && user?.role === 'STUDENT' && (
-            <NavLink to="/my-reports">My Reports</NavLink>
-          )}
-
-          {isAdmin && (
-            <NavLink to="/admin/dashboard">Admin Dashboard</NavLink>
+            <NavLink to="/found-items">Found items</NavLink>
           )}
         </div>
 
