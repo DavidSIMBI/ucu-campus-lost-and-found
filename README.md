@@ -2,7 +2,7 @@
 
 A beginner-friendly foundation for a web application that helps the Uganda Christian University community report lost and found items, search public listings, and request item returns through private ownership claims.
 
-This repository is the project foundation. The homepage uses clearly labeled fictional examples. Authentication, report management, claim review, and administration are not implemented yet.
+This repository is the project foundation. The homepage uses clearly labeled fictional examples. Student account registration is implemented; sign-in, report management, claim review, and administration are not implemented yet.
 
 ## Technologies
 
