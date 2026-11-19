@@ -14,6 +14,8 @@ export default function ItemCard({ item }) {
         <p>{item.location}</p>
         {itemStatus === 'OPEN' && <span className="item-status item-status-open">⚠️ Open</span>}
         {itemStatus === 'RETURNED' && <span className="item-status item-status-returned">✅ Returned</span>}
+        {itemStatus === 'CLOSED' && <span className="item-status item-status-closed">Closed</span>}
+        {item.description && <p className="item-description">{item.description}</p>}
         <span className="category">{item.category}</span>
       </div>
     </article>

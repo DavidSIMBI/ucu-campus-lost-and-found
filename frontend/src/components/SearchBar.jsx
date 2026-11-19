@@ -32,6 +32,12 @@ export default function SearchBar({ value, onChange, filters, onFilterChange = (
           </select>
         </label>
         <label className="filter-control">
+          <span>Status</span>
+          <select value={filters.status ?? 'ALL'} onChange={(event) => onFilterChange('status', event.target.value)}>
+            <option value="ALL">All Statuses</option><option value="OPEN">Open</option><option value="RETURNED">Returned</option><option value="CLOSED">Closed</option>
+          </select>
+        </label>
+        <label className="filter-control">
           <span>Date</span>
           <input type="date" value={filters.event_date ?? ''} onChange={(event) => onFilterChange('event_date', event.target.value)} />
         </label>
