@@ -1,102 +1,129 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { api } from '../services/api.js';
 
-const emptyForm = { fullName: '', email: '', password: '' };
+import { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext.jsx';
 
 export default function RegisterPage() {
-  const [form, setForm] = useState(emptyForm);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { register } = useAuth();
+  const navigate = useNavigate();
 
-  function updateField(event) {
-    setForm({ ...form, [event.target.name]: event.target.value });
-    setError('');
-    setSuccess('');
-  }
+  const [fullName, setFullName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
   async function handleSubmit(event) {
     event.preventDefault();
     setError('');
-    setSuccess('');
-    setIsSubmitting(true);
+
+    if (password.length < 8) {
+      setError('Password must contain at least 8 characters.');
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setError('Passwords do not match.');
+      return;
+    }
+
+    setLoading(true);
 
     try {
-      const { data } = await api.post('/auth/register', form);
-      setSuccess(data.message);
-      setForm(emptyForm);
-    } catch (requestError) {
-      if (requestError.response?.data?.message) {
-        setError(requestError.response.data.message);
-      } else if (requestError.code === 'ECONNABORTED') {
-        setError('The account service is taking too long to respond. Start the backend and check that MySQL is available.');
-      } else {
-        setError('Cannot reach the account service. Start the backend with npm run dev, then try again.');
-      }
+      await register(fullName, email, password);
+      navigate('/', { replace: true });
+    } catch (err) {
+      setError(
+        err.response?.data?.message ||
+        'Registration failed. Please try again.'
+      );
     } finally {
-      setIsSubmitting(false);
+      setLoading(false);
     }
   }
 
   return (
     <section className="auth-page">
       <div className="auth-panel">
-        <p className="section-label">For UCU students and staff</p>
+        <p className="section-label">Join the UCU community</p>
         <h1>Create account</h1>
-        <p className="page-intro">Join the UCU community and help lost belongings find their way home.</p>
+
+        <p className="page-intro">
+          Register to report and find lost belongings on campus.
+        </p>
+
+        {error && (
+          <p className="form-error" role="alert">
+            {error}
+          </p>
+        )}
+
         <form onSubmit={handleSubmit}>
-          <label htmlFor="register-name">
+          <label>
             Full name
             <input
-              id="register-name"
-              name="fullName"
               type="text"
+              value={fullName}
+              onChange={(event) => setFullName(event.target.value)}
               autoComplete="name"
-              placeholder="Your name"
+              placeholder="Your full name"
               minLength={2}
               maxLength={120}
-              value={form.fullName}
-              onChange={updateField}
               required
             />
           </label>
-          <label htmlFor="register-email">
+
+          <label>
             UCU email address
             <input
-              id="register-email"
-              name="email"
               type="email"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
               autoComplete="email"
-              placeholder="name@ucu.ac.ug"
-              maxLength={254}
-              value={form.email}
-              onChange={updateField}
+              placeholder="name@example.com"
               required
             />
           </label>
-          <label htmlFor="register-password">
+
+          <label>
             Password
             <input
-              id="register-password"
-              name="password"
               type="password"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
               autoComplete="new-password"
-              placeholder="At least 8 characters"
               minLength={8}
               maxLength={128}
-              value={form.password}
-              onChange={updateField}
+              placeholder="Create a password"
               required
             />
           </label>
-          {error && <p className="form-message form-error" role="alert">{error}</p>}
-          {success && <p className="form-message form-success" role="status">{success}</p>}
-          <button className="button" type="submit" disabled={isSubmitting || Boolean(success)}>
-            {isSubmitting ? 'Creating account…' : success ? 'Account created' : 'Create account'}
+
+          <label>
+            Confirm password
+            <input
+              type="password"
+              value={confirmPassword}
+              onChange={(event) => setConfirmPassword(event.target.value)}
+              autoComplete="new-password"
+              placeholder="Enter password again"
+              required
+            />
+          </label>
+
+          <button
+            className="button"
+            type="submit"
+            disabled={loading}
+          >
+            {loading ? 'Creating account...' : 'Create account'}
           </button>
         </form>
-        <p className="auth-switch">Already registered? <Link to="/login">Log in</Link></p>
+
+        <p className="auth-switch">
+          Already registered? <Link to="/login">Log in</Link>
+        </p>
       </div>
     </section>
   );

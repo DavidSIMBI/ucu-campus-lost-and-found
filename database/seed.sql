@@ -7,25 +7,16 @@ INSERT INTO users (id, full_name, email, password_hash, role) VALUES
   (3, 'Admin Example', 'admin.example@ucu.ac.ug', '$2b$12$seedOnlyNotAUsablePasswordHash000000000000000000000000000000', 'ADMIN')
 ON DUPLICATE KEY UPDATE email = VALUES(email);
 
-INSERT INTO categories (id, name, slug) VALUES
-  (1, 'Accessories', 'accessories'),
-  (2, 'Electronics', 'electronics'),
-  (3, 'Books', 'books'),
-  (4, 'Clothing', 'clothing'),
-  (5, 'Documents', 'documents'),
-  (6, 'Keys', 'keys'),
-  (7, 'Other', 'other')
-ON DUPLICATE KEY UPDATE name = VALUES(name), slug = VALUES(slug);
-
-INSERT INTO reports (id, reporter_id, report_type, title, description, category_id, location, event_date, status) VALUES
-  (1, 1, 'FOUND', 'Navy blue water bottle', 'A reusable bottle was left on a study table.', 1, 'Main Library', CURRENT_DATE, 'OPEN'),
-  (2, 2, 'LOST', 'Scientific calculator', 'A calculator may have been left after a lecture.', 2, 'Faculty of Science', CURRENT_DATE - INTERVAL 1 DAY, 'OPEN'),
-  (3, 1, 'FOUND', 'Introductory economics textbook', 'A textbook was handed in near the bookshop.', 3, 'University Bookshop', CURRENT_DATE - INTERVAL 2 DAY, 'OPEN')
+INSERT INTO reports (id, reporter_id, report_type, title, description, category, location, photo_path, event_date, status) VALUES
+  (1, 1, 'FOUND', 'Navy blue water bottle', 'A reusable bottle was left on a study table.', 'Accessories', 'Main Library', NULL, CURRENT_DATE, 'OPEN'),
+  (2, 2, 'LOST', 'Scientific calculator', 'A calculator may have been left after a lecture.', 'Electronics', 'Faculty of Science', NULL, CURRENT_DATE - INTERVAL 1 DAY, 'OPEN'),
+  (3, 1, 'FOUND', 'Introductory economics textbook', 'A textbook was handed in near the bookshop.', 'Books', 'University Bookshop', NULL, CURRENT_DATE - INTERVAL 2 DAY, 'OPEN')
 ON DUPLICATE KEY UPDATE
   title = VALUES(title),
   description = VALUES(description),
-  category_id = VALUES(category_id),
+  category = VALUES(category),
   location = VALUES(location),
+  photo_path = VALUES(photo_path),
   event_date = VALUES(event_date);
 
 -- The private clue is intentionally distinct from information shown in the listing.
@@ -33,3 +24,12 @@ INSERT INTO report_private_details (report_id, identifying_details) VALUES
   (1, 'Fictional private clue: a small blue wave sticker on the underside.'),
   (3, 'Fictional private clue: handwritten initials inside the front cover.')
 ON DUPLICATE KEY UPDATE identifying_details = VALUES(identifying_details);
+
+-- A fictional pending claim exercises the claim/evidence relationship.
+INSERT INTO claims (id, report_id, claimant_id, status) VALUES
+  (1, 1, 2, 'PENDING')
+ON DUPLICATE KEY UPDATE report_id = VALUES(report_id), claimant_id = VALUES(claimant_id);
+
+INSERT INTO claim_evidence (claim_id, evidence_text) VALUES
+  (1, 'Fictional ownership clue: the bottle has a small scratch near its base.')
+ON DUPLICATE KEY UPDATE evidence_text = VALUES(evidence_text);
