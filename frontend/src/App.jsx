@@ -1,4 +1,3 @@
-
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 
 import Layout from './components/Layout.jsx';
@@ -9,131 +8,71 @@ import RegisterPage from './pages/RegisterPage.jsx';
 import ReportPage from './pages/ReportPage.jsx';
 import MyReportsPage from './pages/MyReportsPage.jsx';
 import EditReportPage from './pages/EditReportPage.jsx';
-import AdminDashboardPage from './pages/AdminDashboardPage.jsx';
+import AccountPage from './pages/AccountPage.jsx';
+import AccountActivityPage from './pages/AccountActivityPage.jsx';
+import FoundItemsPage from './pages/FoundItemsPage.jsx';
+import FoundItemDetailPage from './pages/FoundItemDetailPage.jsx';
+import ClaimSubmissionPage from './pages/ClaimSubmissionPage.jsx';
+import MyClaimsPage from './pages/MyClaimsPage.jsx';
+import MyClaimDetailPage from './pages/MyClaimDetailPage.jsx';
+import AdminClaimsPage from './pages/AdminClaimsPage.jsx';
+import AdminClaimDetailPage from './pages/AdminClaimDetailPage.jsx';
+import AdminUsersPage from './pages/AdminUsersPage.jsx';
 
 import { useAuth } from './context/AuthContext.jsx';
 
-// Protect pages that require login
 function ProtectedRoute({ children }) {
   const { isAuthenticated } = useAuth();
   const location = useLocation();
-
-  if (!isAuthenticated) {
-    return (
-      <Navigate
-        to="/login"
-        replace
-        state={{ from: location }}
-      />
-    );
-  }
-
+  if (!isAuthenticated) return <Navigate to="/login" replace state={{ from: location }} />;
   return children;
 }
 
-// Protect administrator-only pages
 function AdminRoute({ children }) {
   const { isAuthenticated, isAdmin } = useAuth();
-
-  if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
-  }
-
-  if (!isAdmin) {
-    return <Navigate to="/" replace />;
-  }
-
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  if (!isAdmin) return <Navigate to="/" replace />;
   return children;
 }
 
-// Student account page
-function AccountPage() {
-  const { user, logout } = useAuth();
+function StudentRoute({ children }) {
+  const { isAuthenticated, user } = useAuth();
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  if (user?.role !== 'STUDENT') return <Navigate to="/" replace />;
+  return children;
+}
 
-  return (
-    <section className="browse-page section-shell">
-      <p className="section-label">My account</p>
-      <h1>Welcome, {user.fullName}</h1>
-
-      <p className="page-intro">
-        You are logged in as {user.role}.
-      </p>
-
-      <button className="button" onClick={logout}>
-        Log out
-      </button>
-    </section>
-  );
+function AccountRedirect({ section }) {
+  const { isAdmin } = useAuth();
+  return <Navigate to={`/account?section=${isAdmin ? 'admin-overview' : section}`} replace />;
 }
 
 export default function App() {
   return (
     <Routes>
       <Route element={<Layout />}>
-        {/* Public pages */}
         <Route path="/" element={<HomePage />} />
         <Route path="/items" element={<BrowsePage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
 
-        {/* Protected student and admin account */}
-        <Route
-          path="/account"
-          element={
-            <ProtectedRoute>
-              <AccountPage />
-            </ProtectedRoute>
-          }
-        />
+        <Route path="/student/dashboard" element={<StudentRoute><AccountRedirect section="overview" /></StudentRoute>} />
+        <Route path="/admin" element={<AdminRoute><AccountRedirect section="admin-overview" /></AdminRoute>} />
+        <Route path="/admin/dashboard" element={<AdminRoute><AccountRedirect section="admin-overview" /></AdminRoute>} />
 
-        {/* Protected report creation page */}
-        <Route
-          path="/report"
-          element={
-            <ProtectedRoute>
-              <ReportPage />
-            </ProtectedRoute>
-          }
-        />
+        <Route path="/account" element={<ProtectedRoute><AccountPage /></ProtectedRoute>} />
+        <Route path="/found-items" element={<ProtectedRoute><FoundItemsPage /></ProtectedRoute>} />
+        <Route path="/found-items/:id" element={<ProtectedRoute><FoundItemDetailPage /></ProtectedRoute>} />
+        <Route path="/found-items/:id/claim" element={<StudentRoute><ClaimSubmissionPage /></StudentRoute>} />
+        <Route path="/my-claims" element={<StudentRoute><MyClaimsPage /></StudentRoute>} />
+        <Route path="/my-claims/:id" element={<StudentRoute><MyClaimDetailPage /></StudentRoute>} />
+        <Route path="/report" element={<ProtectedRoute><ReportPage /></ProtectedRoute>} />
+        <Route path="/my-reports" element={<ProtectedRoute><MyReportsPage /></ProtectedRoute>} />
+        <Route path="/my-reports/:id/edit" element={<ProtectedRoute><EditReportPage /></ProtectedRoute>} />
 
-        {/* Protected list of the authenticated user's reports */}
-        <Route
-          path="/my-reports"
-          element={
-            <ProtectedRoute>
-              <MyReportsPage />
-            </ProtectedRoute>
-          }
-        />
-
-        {/* Protected report editing page */}
-        <Route
-          path="/my-reports/:id/edit"
-          element={
-            <ProtectedRoute>
-              <EditReportPage />
-            </ProtectedRoute>
-          }
-        />
-
-        {/* Admin-only dashboard */}
-        <Route
-          path="/admin"
-          element={
-            <AdminRoute>
-              <Navigate to="/admin/dashboard" replace />
-            </AdminRoute>
-          }
-        />
-        <Route
-          path="/admin/dashboard"
-          element={
-            <AdminRoute>
-              <AdminDashboardPage />
-            </AdminRoute>
-          }
-        />
-
+        <Route path="/admin/claims" element={<AdminRoute><AdminClaimsPage /></AdminRoute>} />
+        <Route path="/admin/claims/:id" element={<AdminRoute><AdminClaimDetailPage /></AdminRoute>} />
+        <Route path="/admin/users" element={<AdminRoute><AdminUsersPage /></AdminRoute>} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>

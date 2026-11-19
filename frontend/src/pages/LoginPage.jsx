@@ -20,8 +20,8 @@ export default function LoginPage() {
     try {
       const response = await login(email, password);
       const destination = response.user?.role === 'ADMIN'
-        ? '/admin/dashboard'
-        : '/';
+        ? '/account?section=admin-overview'
+        : '/account?section=overview';
       navigate(destination, { replace: true });
     } catch (err) {
       setError(
