@@ -1,6 +1,6 @@
 # Database
 
-The MySQL 8 schema includes users, reports, private report details, claims, claim evidence, claim status history, indexes, lifecycle constraints, and a public report view. Report categories are stored as strings to match the current API.
+The MySQL 8 schema includes users, reports, private report details, claims, claim evidence, claim status history, indexes, lifecycle constraints and triggers, and a public report view. Report categories are stored as strings to match the current API.
 
 ## Setup
 

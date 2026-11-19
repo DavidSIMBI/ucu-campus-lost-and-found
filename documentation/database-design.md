@@ -48,7 +48,7 @@ Stores the previous and new statuses, actor, and timestamp. Status-changing appl
 
 ## Integrity and backend responsibilities
 
-Foreign keys preserve record relationships; report and claim checks enforce required lifecycle fields and decision reasons. The backend must still authenticate users, check administrator roles, validate request data, prevent a user claiming their own found item, and use parameterized SQL (`mysql2`'s `execute`). Claim approval and return confirmation should use transactions. Concurrent approvals must be protected by the unique approved-report key.
+Foreign keys preserve record relationships; report and claim checks enforce required lifecycle fields and decision reasons. Database triggers reject claims on lost, closed, or self-reported items, prevent approval after return, and require an approved claim before return. The backend must still authenticate users, check administrator roles, validate request data, and use parameterized SQL (`mysql2`'s `execute`). Claim approval and return confirmation should use transactions. Concurrent approvals must be protected by the unique approved-report key.
 
 The public report API should select only listing fields. Never expose `report_private_details` or `claim_evidence` through public queries.
 

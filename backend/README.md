@@ -8,4 +8,4 @@ From the repository root, run `mysql -u root -p < database/schema.sql` to create
 
 Set `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, and `DB_PASSWORD` in `backend/.env`. From this directory, run `npm run db:check` to execute a read-only query and verify the `mysql2` connection. The check exits nonzero and prints the connection error when MySQL is unavailable or credentials are invalid.
 
-The API health check is `GET /api/health`. Authentication uses `POST /api/auth/register` with `fullName`, `email`, and `password`, and `POST /api/auth/login` with `email` and `password`. Both return a bearer token and public user profile. The database details and integrity rules are in [`../documentation/database-design.md`](../documentation/database-design.md).
+The API health check is `GET /api/health`. Authentication uses `POST /api/auth/register` with `fullName`, `email`, and `password`, and `POST /api/auth/login` with `email` and `password`. Both return a bearer token and public user profile; passwords are stored as bcrypt hashes. The database details and integrity rules are in [`../documentation/database-design.md`](../documentation/database-design.md).

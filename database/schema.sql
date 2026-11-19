@@ -249,6 +249,77 @@ CREATE TABLE IF NOT EXISTS claim_status_history (
 ) ENGINE=InnoDB;
 
 
+-- Keep essential claim rules in the database even if a caller bypasses the API.
+DELIMITER $$
+
+DROP TRIGGER IF EXISTS before_claim_insert$$
+DROP TRIGGER IF EXISTS before_claim_update$$
+DROP TRIGGER IF EXISTS before_report_return$$
+
+CREATE TRIGGER before_claim_insert
+BEFORE INSERT ON claims
+FOR EACH ROW
+BEGIN
+    DECLARE item_reporter BIGINT UNSIGNED;
+    DECLARE item_type VARCHAR(10);
+    DECLARE item_status VARCHAR(10);
+
+    SELECT reporter_id, report_type, status
+      INTO item_reporter, item_type, item_status
+      FROM reports
+      WHERE id = NEW.report_id;
+
+    IF item_type <> 'FOUND' THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Claims can only be made against found reports.';
+    END IF;
+    IF item_reporter = NEW.claimant_id THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'A reporter cannot claim their own found report.';
+    END IF;
+    IF item_status <> 'OPEN' THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Claims can only be made against open reports.';
+    END IF;
+END$$
+
+CREATE TRIGGER before_claim_update
+BEFORE UPDATE ON claims
+FOR EACH ROW
+BEGIN
+    DECLARE item_reporter BIGINT UNSIGNED;
+    DECLARE item_type VARCHAR(10);
+    DECLARE item_status VARCHAR(10);
+
+    SELECT reporter_id, report_type, status
+      INTO item_reporter, item_type, item_status
+      FROM reports
+      WHERE id = NEW.report_id;
+
+    IF item_type <> 'FOUND' THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Claims can only be made against found reports.';
+    END IF;
+    IF item_reporter = NEW.claimant_id THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'A reporter cannot claim their own found report.';
+    END IF;
+    IF NEW.status = 'APPROVED' AND item_status <> 'OPEN' THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'A claim can only be approved while its report is open.';
+    END IF;
+END$$
+
+CREATE TRIGGER before_report_return
+BEFORE UPDATE ON reports
+FOR EACH ROW
+BEGIN
+    IF NEW.status = 'RETURNED' AND OLD.status <> 'RETURNED'
+       AND NOT EXISTS (
+           SELECT 1 FROM claims
+           WHERE report_id = OLD.id AND status = 'APPROVED'
+       ) THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'An item can only be returned after a claim is approved.';
+    END IF;
+END$$
+
+DELIMITER ;
+
+
 -- =====================================
 -- 7. PUBLIC REPORTS VIEW
 -- =====================================
