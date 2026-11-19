@@ -18,8 +18,8 @@ CREATE TABLE IF NOT EXISTS users (
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
     token_version INT UNSIGNED NOT NULL DEFAULT 0,
     last_login_at DATETIME NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
         ON UPDATE CURRENT_TIMESTAMP,
 
     PRIMARY KEY (id),
@@ -46,7 +46,7 @@ CREATE TABLE IF NOT EXISTS reports (
     event_date DATE NOT NULL,
 
     -- Optional item photograph
-    photo_path VARCHAR(500) NULL,
+    photo_path VARCHAR(255) NULL,
 
     status ENUM('OPEN', 'RETURNED', 'CLOSED')
         NOT NULL DEFAULT 'OPEN',
@@ -57,12 +57,13 @@ CREATE TABLE IF NOT EXISTS reports (
 
     closed_at DATETIME NULL,
 
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
         ON UPDATE CURRENT_TIMESTAMP,
 
     PRIMARY KEY (id),
 
+    KEY ix_reports_public_listing (report_type, status, created_at),
     KEY ix_reports_reporter (reporter_id),
     KEY ix_reports_status (status),
     KEY ix_reports_type (report_type),
@@ -81,6 +82,11 @@ CREATE TABLE IF NOT EXISTS reports (
         (status = 'RETURNED' AND returned_at IS NOT NULL AND returned_by IS NOT NULL AND closed_at IS NULL)
         OR (status = 'CLOSED' AND closed_at IS NOT NULL AND returned_at IS NULL AND returned_by IS NULL)
         OR (status = 'OPEN' AND returned_at IS NULL AND returned_by IS NULL AND closed_at IS NULL)
+    ),
+
+    CONSTRAINT chk_report_return_time CHECK (
+        (status = 'RETURNED' AND returned_at IS NOT NULL) OR
+        (status <> 'RETURNED' AND returned_at IS NULL)
     )
 ) ENGINE=InnoDB;
 
@@ -94,8 +100,8 @@ CREATE TABLE IF NOT EXISTS report_private_details (
 
     identifying_details TEXT NOT NULL,
 
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
         ON UPDATE CURRENT_TIMESTAMP,
 
     PRIMARY KEY (report_id),
@@ -131,8 +137,8 @@ CREATE TABLE IF NOT EXISTS claims (
     -- Reason for approval or rejection
     review_note VARCHAR(500) NULL,
 
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
         ON UPDATE CURRENT_TIMESTAMP,
 
     approved_report_id BIGINT UNSIGNED
@@ -150,6 +156,8 @@ CREATE TABLE IF NOT EXISTS claims (
 
     KEY ix_claims_claimant_status
         (claimant_id, status),
+
+    KEY ix_claims_claimant (claimant_id),
 
     KEY ix_claims_report_status
         (report_id, status),
@@ -191,8 +199,8 @@ CREATE TABLE IF NOT EXISTS claim_evidence (
     -- Optional evidence attachment
     evidence_file VARCHAR(500) NULL,
 
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
         ON UPDATE CURRENT_TIMESTAMP,
 
     PRIMARY KEY (claim_id),
