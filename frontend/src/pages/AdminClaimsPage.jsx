@@ -3,6 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import AdminModuleShell from '../components/AdminModuleShell.jsx';
 import ClaimStatusBadge from '../components/ClaimStatusBadge.jsx';
 import { ClaimError, ClaimLoading } from '../components/ClaimState.jsx';
+import useAdminSession from '../hooks/useAdminSession.js';
 import { getAdminClaims } from '../services/adminService.js';
 
 const PAGE_SIZE = 20;
@@ -14,6 +15,7 @@ function formatDate(value) {
 
 export default function AdminClaimsPage({ embedded = false }) {
   const [searchParams, setSearchParams] = useSearchParams();
+  const handleUnauthorized = useAdminSession();
   const [status, setStatus] = useState(searchParams.get('status') || '');
   const [search, setSearch] = useState('');
   const [sort, setSort] = useState('pending');
@@ -29,10 +31,13 @@ export default function AdminClaimsPage({ embedded = false }) {
     setError('');
     getAdminClaims({ status, search, sort, page, limit: PAGE_SIZE, signal: controller.signal })
       .then((result) => setData(result))
-      .catch((requestError) => { if (!controller.signal.aborted) setError(requestError.response?.data?.message || 'Unable to load claims.'); })
+      .catch(async (requestError) => {
+        if (controller.signal.aborted || await handleUnauthorized(requestError)) return;
+        setError(requestError.response?.data?.message || 'Unable to load claims.');
+      })
       .finally(() => { if (!controller.signal.aborted) setLoading(false); });
     return () => controller.abort();
-  }, [status, search, sort, page, retry]);
+  }, [status, search, sort, page, retry, handleUnauthorized]);
 
   function updateStatus(value) {
     setStatus(value);
@@ -40,7 +45,7 @@ export default function AdminClaimsPage({ embedded = false }) {
     setSearchParams(value ? { status: value } : {});
   }
 
-  const content = <div className="module-panel admin-queue-panel">
+  const content = <div className="module-panel admin-queue-panel admin-claims-panel">
       <div className="module-panel-heading"><div><p className="admin-eyebrow">Review workspace</p><h2>Claims queue</h2><p className="field-help">{data.pagination.total} claim{data.pagination.total === 1 ? '' : 's'} found</p></div></div>
       <div className="module-filters admin-queue-filters">
         <label className="module-search">Search claims<input type="search" value={search} onChange={(event) => { setSearch(event.target.value); setPage(1); }} placeholder="Student, email, or item title" /></label>
@@ -49,8 +54,8 @@ export default function AdminClaimsPage({ embedded = false }) {
       </div>
       {loading && <ClaimLoading>Loading claims queue…</ClaimLoading>}
       {!loading && error && <ClaimError message={error} onRetry={() => setRetry((value) => value + 1)} />}
-      {!loading && !error && (data.claims.length ? <div className="responsive-table-wrap"><table className="module-table"><thead><tr><th>Claim</th><th>Student</th><th>Found item</th><th>Submitted</th><th>Status</th><th><span className="sr-only">Action</span></th></tr></thead><tbody>
-        {data.claims.map((claim) => <tr key={claim.id}><td>#{claim.id}</td><td><strong>{claim.claimant.fullName}</strong><small>{claim.claimant.email}</small></td><td>{claim.report.title}</td><td>{formatDate(claim.submittedAt)}</td><td><ClaimStatusBadge status={claim.status} /></td><td><Link className="text-link" to={`/admin/claims/${claim.id}`}>Review →</Link></td></tr>)}
+      {!loading && !error && (data.claims.length ? <div className="responsive-table-wrap"><table className="module-table admin-claims-table"><thead><tr><th scope="col">Claim</th><th scope="col">Student</th><th scope="col">Found item</th><th scope="col">Submitted</th><th scope="col">Status</th><th scope="col">Review</th></tr></thead><tbody>
+        {data.claims.map((claim) => <tr className={`admin-claim-row admin-claim-row-${String(claim.status || '').toLowerCase()}`} key={claim.id}><td>#{claim.id}</td><td><strong>{claim.claimant.fullName}</strong><small>{claim.claimant.email}</small></td><td>{claim.report.title}</td><td>{formatDate(claim.submittedAt)}</td><td><ClaimStatusBadge status={claim.status} /></td><td><Link className="text-link" to={`/admin/claims/${claim.id}`}>Review →</Link></td></tr>)}
       </tbody></table></div> : <div className="module-empty"><h3>No claims match these filters</h3><p>Try a different status or search term.</p></div>)}
       {!loading && !error && data.pagination.totalPages > 1 && <nav className="pagination-controls" aria-label="Claims pages"><button type="button" disabled={page <= 1} onClick={() => setPage((value) => value - 1)}>Previous</button><span>Page {page} of {data.pagination.totalPages}</span><button type="button" disabled={page >= data.pagination.totalPages} onClick={() => setPage((value) => value + 1)}>Next</button></nav>}
     </div>;

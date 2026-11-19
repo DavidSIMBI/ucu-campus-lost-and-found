@@ -6,7 +6,7 @@ export default function AdminModuleShell({ title, eyebrow = 'Administration', ch
   const name = user?.fullName || user?.email || 'Administrator';
   const initial = name.trim().slice(0, 1).toUpperCase();
 
-  return <section className="admin-dashboard" aria-label="Administration workspace">
+  return <section className="admin-dashboard admin-workspace" aria-label="Administration workspace">
     <aside className="admin-sidebar">
       <Link className="admin-sidebar-brand" to="/" aria-label="UCU Lost and Found home"><span className="brand-mark" aria-hidden="true">U</span><span>UCU <strong>Administration</strong></span></Link>
       <p className="admin-sidebar-label">Workspace</p>
@@ -20,7 +20,7 @@ export default function AdminModuleShell({ title, eyebrow = 'Administration', ch
       <div className="admin-sidebar-account"><span className="admin-account-avatar" aria-hidden="true">{initial}</span><span className="admin-account-copy"><strong>{name}</strong><small>Administrator</small></span><button className="admin-sidebar-logout" type="button" onClick={logout}>Log out</button></div>
     </aside>
     <div className="admin-dashboard-main">
-      <header className="admin-dashboard-header"><div><p className="admin-eyebrow">{eyebrow}</p><h1>{title}</h1></div><div className="admin-header-user"><span className="admin-header-avatar" aria-hidden="true">{initial}</span><span><strong>{name}</strong><small>Administrator</small></span></div></header>
+      <header className="admin-dashboard-header"><div><p className="admin-eyebrow">{eyebrow}</p><h1>{title}</h1></div></header>
       <div className="admin-dashboard-content">{children}</div>
     </div>
   </section>;

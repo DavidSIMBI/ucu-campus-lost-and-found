@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import AdminModuleShell from '../components/AdminModuleShell.jsx';
 import ClaimStatusBadge from '../components/ClaimStatusBadge.jsx';
 import { ClaimError, ClaimLoading } from '../components/ClaimState.jsx';
+import useAdminSession from '../hooks/useAdminSession.js';
 import { downloadBlob, getEvidenceFile } from '../services/claimsService.js';
 import { completeHandover, getAdminClaim, reviewClaim } from '../services/adminService.js';
 
@@ -25,8 +26,25 @@ function formatEventDate(value) {
   }).format(date);
 }
 
+function isValidClaimReview(value) {
+  return Boolean(
+    value &&
+    typeof value === 'object' &&
+    !Array.isArray(value) &&
+    value.id != null &&
+    value.report &&
+    typeof value.report === 'object' &&
+    !Array.isArray(value.report) &&
+    value.claimant &&
+    typeof value.claimant === 'object' &&
+    !Array.isArray(value.claimant) &&
+    (value.evidenceFiles == null || Array.isArray(value.evidenceFiles))
+  );
+}
+
 export default function AdminClaimDetailPage() {
   const { id } = useParams();
+  const handleUnauthorized = useAdminSession();
   const [claim, setClaim] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -39,12 +57,28 @@ export default function AdminClaimDetailPage() {
     const controller = new AbortController();
     setLoading(true);
     setError('');
-    getAdminClaim(id, { signal: controller.signal })
-      .then((result) => { setClaim(result); setReviewNote(result?.reviewNote || ''); })
-      .catch((requestError) => { if (!controller.signal.aborted) setError(requestError.response?.data?.message || 'Unable to load this claim.'); })
-      .finally(() => { if (!controller.signal.aborted) setLoading(false); });
+    setClaim(null);
+
+    async function loadClaim() {
+      try {
+        const result = await getAdminClaim(id, { signal: controller.signal });
+        if (!isValidClaimReview(result)) {
+          setError('This claim is unavailable or its details could not be loaded.');
+          return;
+        }
+        setClaim(result);
+        setReviewNote(result.reviewNote || '');
+      } catch (requestError) {
+        if (controller.signal.aborted || await handleUnauthorized(requestError)) return;
+        setError(requestError.response?.data?.message || 'Unable to load this claim.');
+      } finally {
+        if (!controller.signal.aborted) setLoading(false);
+      }
+    }
+
+    loadClaim();
     return () => controller.abort();
-  }, [id, retry]);
+  }, [id, retry, handleUnauthorized]);
 
   async function decide(decision) {
     if (decision === 'REJECT' && reviewNote.trim().length < 5) {
@@ -59,6 +93,7 @@ export default function AdminClaimDetailPage() {
       await reviewClaim(id, decision, reviewNote);
       setRetry((value) => value + 1);
     } catch (requestError) {
+      if (await handleUnauthorized(requestError)) return;
       setActionError(requestError.response?.data?.message || 'Unable to record this decision.');
     } finally { setBusy(false); }
   }
@@ -71,6 +106,7 @@ export default function AdminClaimDetailPage() {
       await completeHandover(id);
       setRetry((value) => value + 1);
     } catch (requestError) {
+      if (await handleUnauthorized(requestError)) return;
       setActionError(requestError.response?.data?.message || 'Unable to complete handover.');
     } finally { setBusy(false); }
   }
@@ -81,6 +117,7 @@ export default function AdminClaimDetailPage() {
     try {
       downloadBlob(await getEvidenceFile(id, file.id), file.originalFilename);
     } catch (requestError) {
+      if (await handleUnauthorized(requestError)) return;
       setActionError(requestError.response?.data?.message || 'Unable to access this evidence file.');
     } finally { setBusy(false); }
   }

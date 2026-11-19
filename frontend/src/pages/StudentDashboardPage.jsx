@@ -1,8 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import ClaimStatusBadge from '../components/ClaimStatusBadge.jsx';
-import { ClaimError, ClaimLoading } from '../components/ClaimState.jsx';
-import { useAuth } from '../context/AuthContext.jsx';
+import { ClaimError } from '../components/ClaimState.jsx';
 import { getMyClaims } from '../services/claimsService.js';
 
 const statusCards = [
@@ -19,7 +18,6 @@ function formatDate(value) {
 }
 
 export default function StudentDashboardPage() {
-  const { user } = useAuth();
   const [claims, setClaims] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -44,26 +42,45 @@ export default function StudentDashboardPage() {
     approved: claims.filter((claim) => claim.status === 'APPROVED').length,
     rejected: claims.filter((claim) => claim.status === 'REJECTED').length
   }), [claims]);
-
   return (
-    <section className="module-page section-shell">
-      <header className="module-heading">
-        <div><p className="section-label">Student workspace</p><h1>Welcome, {user?.fullName?.split(' ')[0] || 'student'}</h1>
-          <p className="page-intro">Track your claims and find a path to reunite with your belongings.</p></div>
+    <section className="module-page section-shell student-overview" aria-labelledby="student-overview-title">
+      <header className="module-heading student-overview-heading">
+        <div>
+          <p className="section-label">Student workspace</p>
+          <h1 id="student-overview-title">Your claim overview</h1>
+          <p className="page-intro">Review the claims you have submitted and follow their latest status.</p>
+        </div>
         <Link className="button" to="/found-items">Find an item</Link>
       </header>
 
-      {loading && <ClaimLoading>Loading your dashboard…</ClaimLoading>}
+      {loading && (
+        <div className="student-overview-loading" role="status" aria-live="polite">
+          <span className="student-overview-spinner" aria-hidden="true" />
+          <span>Loading your claim activity…</span>
+        </div>
+      )}
       {!loading && error && <ClaimError message={error} onRetry={() => setRetry((value) => value + 1)} />}
       {!loading && !error && <>
-        <div className="module-stat-grid">
-          {statusCards.map(({ key, label, tone }) => <article className={`module-stat module-stat-${tone}`} key={key}>
-            <span>{label}</span><strong>{counts[key]}</strong>
-          </article>)}
-        </div>
+        <section className="student-overview-summary" aria-labelledby="student-claim-summary-title">
+          <header className="student-overview-section-heading">
+            <div>
+              <p className="section-label">Your claims</p>
+              <h2 id="student-claim-summary-title">Claim summary</h2>
+            </div>
+            <p>Counts reflect the claim records in your account.</p>
+          </header>
+          <div className="module-stat-grid student-overview-stat-grid">
+            {statusCards.map(({ key, label, tone }) => (
+              <article className={`module-stat module-stat-${tone}`} key={key}>
+                <span>{label}</span>
+                <strong>{counts[key]}</strong>
+              </article>
+            ))}
+          </div>
+        </section>
 
-        <div className="module-two-column">
-          <section className="module-panel" aria-labelledby="recent-claims-title">
+        <div className="module-two-column student-overview-panels">
+          <section className="module-panel student-overview-recent" aria-labelledby="recent-claims-title">
             <div className="module-panel-heading"><div><p className="section-label">Your activity</p><h2 id="recent-claims-title">Recent claims</h2></div>
               <Link className="text-link" to="/my-claims">View all</Link></div>
             {claims.length === 0 ? <div className="module-empty"><h3>No claims yet</h3><p>Claims you submit for found items will appear here.</p><Link className="button button-small" to="/found-items">Explore found items</Link></div> :
@@ -73,11 +90,16 @@ export default function StudentDashboardPage() {
               </Link>)}</div>}
           </section>
 
-          <aside className="module-panel module-quick-actions">
-            <p className="section-label">Get started</p><h2>Quick actions</h2>
+          <aside className="module-panel module-quick-actions student-overview-actions" aria-labelledby="student-overview-actions-title">
+            <div>
+              <p className="section-label">Your account</p>
+              <h2 id="student-overview-actions-title">Quick links</h2>
+            </div>
             <Link to="/found-items">Browse found items <span aria-hidden="true">↗</span></Link>
             <Link to="/my-claims">Track my claims <span aria-hidden="true">↗</span></Link>
             <Link to="/report">Report an item <span aria-hidden="true">↗</span></Link>
+            <Link to="/my-reports">My reports <span aria-hidden="true">↗</span></Link>
+            <Link to="/account?section=activity">Recent activity <span aria-hidden="true">↗</span></Link>
           </aside>
         </div>
       </>}
