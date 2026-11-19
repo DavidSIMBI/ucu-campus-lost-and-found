@@ -2,6 +2,13 @@
 import { Router } from 'express';
 import { database } from '../config/database.js';
 import { authenticate } from '../middleware/auth.middleware.js';
+import {
+  deleteStoredReportPhoto,
+  prepareReportPhoto,
+  publicReportPhotoPath,
+  reportPhotoUpload,
+  storePreparedReportPhoto
+} from '../services/report-photo.service.js';
 
 const router = Router();
 const MYSQL_TEXT_MAX_BYTES = 65535;
@@ -10,6 +17,31 @@ router.use(authenticate);
 
 function exceedsMysqlTextLimit(value) {
   return Buffer.byteLength(value.trim(), 'utf8') > MYSQL_TEXT_MAX_BYTES;
+}
+
+function parseRemovePhoto(body) {
+  if (!Object.hasOwn(body, 'removePhoto')) return false;
+  if (body.removePhoto === true || body.removePhoto === 'true') return true;
+  if (body.removePhoto === false || body.removePhoto === 'false') return false;
+  return null;
+}
+
+async function removePhotoAfterCommit(filename) {
+  try {
+    await deleteStoredReportPhoto(filename);
+  } catch {
+    // A failed cleanup leaves an orphaned file but must not undo a committed update.
+    console.error('Unable to remove an old report photo after a committed update.');
+  }
+}
+
+async function removeNewPhotoAfterFailure(filename) {
+  try {
+    await deleteStoredReportPhoto(filename);
+  } catch {
+    // Preserve the database error while making a possible orphan visible to operators.
+    console.error('Unable to remove a new report photo after a failed database operation.');
+  }
 }
 
 function isValidEventDate(value) {
@@ -64,6 +96,8 @@ function validateReportUpdate(body) {
     'id',
     'reporter_id',
     'reporterId',
+    'photo_path',
+    'photoPath',
     'status',
     'returned_at',
     'returnedAt',
@@ -137,6 +171,8 @@ router.get('/', async (request, response, next) => {
         r.category,
         r.location,
         r.event_date,
+        CASE WHEN r.photo_path IS NULL THEN NULL
+          ELSE CONCAT('/uploads/reports/', r.photo_path) END AS photo_path,
         r.status,
         r.created_at,
         u.full_name AS reporter_name
@@ -188,6 +224,8 @@ router.get('/mine', async (request, response, next) => {
           category,
           location,
           event_date,
+          CASE WHEN photo_path IS NULL THEN NULL
+            ELSE CONCAT('/uploads/reports/', photo_path) END AS photo_path,
           status,
           created_at
         FROM reports
@@ -224,6 +262,8 @@ router.get('/:id/edit', async (request, response, next) => {
           category,
           location,
           event_date,
+          CASE WHEN photo_path IS NULL THEN NULL
+            ELSE CONCAT('/uploads/reports/', photo_path) END AS photo_path,
           status
         FROM reports
         WHERE id = ? AND reporter_id = ?
@@ -305,6 +345,8 @@ router.get('/:id', async (request, response, next) => {
           r.category,
           r.location,
           r.event_date,
+          CASE WHEN r.photo_path IS NULL THEN NULL
+            ELSE CONCAT('/uploads/reports/', r.photo_path) END AS photo_path,
           r.status,
           r.created_at,
           u.full_name AS reporter_name
@@ -329,7 +371,7 @@ router.get('/:id', async (request, response, next) => {
 });
 
 // UPDATE AN OWNED OPEN REPORT
-router.put('/:id', async (request, response, next) => {
+router.put('/:id', reportPhotoUpload, async (request, response, next) => {
   const reportId = isValidReportId(request.params.id);
 
   if (!reportId) {
@@ -344,15 +386,34 @@ router.put('/:id', async (request, response, next) => {
     return response.status(400).json({ message: validationError });
   }
 
+  const removePhoto = parseRemovePhoto(request.body);
+
+  if (removePhoto === null) {
+    return response.status(400).json({
+      message: 'removePhoto must be true or false.'
+    });
+  }
+
+  if (removePhoto && request.file) {
+    return response.status(400).json({
+      message: 'Upload a replacement photo or remove the current photo, not both.'
+    });
+  }
+
   let connection;
+  let newPhotoFilename = null;
+  let preparedPhoto = null;
+  let previousPhotoFilename = null;
+  let committed = false;
 
   try {
+    preparedPhoto = await prepareReportPhoto(request.file);
     connection = await database.getConnection();
     await connection.beginTransaction();
 
     const [reports] = await connection.execute(
       `
-        SELECT report_type, status
+        SELECT report_type, status, photo_path
         FROM reports
         WHERE id = ? AND reporter_id = ?
         LIMIT 1
@@ -369,6 +430,7 @@ router.put('/:id', async (request, response, next) => {
     }
 
     const report = reports[0];
+    previousPhotoFilename = report.photo_path;
 
     if (report.status !== 'OPEN') {
       await connection.rollback();
@@ -416,21 +478,32 @@ router.put('/:id', async (request, response, next) => {
       });
     }
 
+    const updateValues = [
+      request.body.title.trim(),
+      request.body.description.trim(),
+      request.body.category.trim(),
+      request.body.location.trim(),
+      request.body.eventDate
+    ];
+    let photoUpdate = '';
+
+    if (preparedPhoto) {
+      newPhotoFilename = await storePreparedReportPhoto(preparedPhoto);
+      photoUpdate = ', photo_path = ?';
+      updateValues.push(newPhotoFilename);
+    } else if (removePhoto) {
+      photoUpdate = ', photo_path = NULL';
+    }
+
+    updateValues.push(reportId, request.user.id);
+
     await connection.execute(
       `
         UPDATE reports
-        SET title = ?, description = ?, category = ?, location = ?, event_date = ?
+        SET title = ?, description = ?, category = ?, location = ?, event_date = ?${photoUpdate}
         WHERE id = ? AND reporter_id = ? AND status = 'OPEN'
       `,
-      [
-        request.body.title.trim(),
-        request.body.description.trim(),
-        request.body.category.trim(),
-        request.body.location.trim(),
-        request.body.eventDate,
-        reportId,
-        request.user.id
-      ]
+      updateValues
     );
 
     if (report.report_type === 'FOUND') {
@@ -445,10 +518,18 @@ router.put('/:id', async (request, response, next) => {
     }
 
     await connection.commit();
+    committed = true;
+
+    if ((preparedPhoto || removePhoto) && previousPhotoFilename) {
+      await removePhotoAfterCommit(previousPhotoFilename);
+    }
 
     return response.json({
       message: 'Report updated successfully.',
-      reportId
+      reportId,
+      photo_path: publicReportPhotoPath(
+        preparedPhoto ? newPhotoFilename : (removePhoto ? null : previousPhotoFilename)
+      )
     });
   } catch (error) {
     if (connection) {
@@ -458,6 +539,11 @@ router.put('/:id', async (request, response, next) => {
         // Preserve the original operation error for Express.
       }
     }
+
+    if (!committed && newPhotoFilename) {
+      await removeNewPhotoAfterFailure(newPhotoFilename);
+    }
+
     return next(error);
   } finally {
     connection?.release();
@@ -465,7 +551,8 @@ router.put('/:id', async (request, response, next) => {
 });
 
 // CREATE A LOST OR FOUND REPORT
-router.post('/', async (request, response, next) => {
+router.post('/', reportPhotoUpload, async (request, response, next) => {
+  const body = request.body || {};
   const {
     reportType,
     title,
@@ -474,7 +561,7 @@ router.post('/', async (request, response, next) => {
     location,
     eventDate,
     identifyingDetails
-  } = request.body;
+  } = body;
 
   const allowedTypes = ['LOST', 'FOUND'];
 
@@ -537,10 +624,18 @@ router.post('/', async (request, response, next) => {
     });
   }
 
-  const connection = await database.getConnection();
+  let connection;
+  let newPhotoFilename = null;
+  let committed = false;
 
   try {
+    const preparedPhoto = await prepareReportPhoto(request.file);
+    connection = await database.getConnection();
     await connection.beginTransaction();
+
+    if (preparedPhoto) {
+      newPhotoFilename = await storePreparedReportPhoto(preparedPhoto);
+    }
 
     const [result] = await connection.execute(
       `
@@ -551,9 +646,10 @@ router.post('/', async (request, response, next) => {
           description,
           category,
           location,
-          event_date
+          event_date,
+          photo_path
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
       `,
       [
         request.user.id,
@@ -562,7 +658,8 @@ router.post('/', async (request, response, next) => {
         description.trim(),
         category.trim(),
         location.trim(),
-        eventDate
+        eventDate,
+        newPhotoFilename
       ]
     );
 
@@ -580,20 +677,28 @@ router.post('/', async (request, response, next) => {
     }
 
     await connection.commit();
+    committed = true;
 
     return response.status(201).json({
       message: 'Report created successfully.',
-      reportId: result.insertId
+      reportId: result.insertId,
+      photo_path: publicReportPhotoPath(newPhotoFilename)
     });
   } catch (error) {
-    try {
-      await connection.rollback();
-    } catch {
-      // Preserve the original operation error for Express.
+    if (connection) {
+      try {
+        await connection.rollback();
+      } catch {
+        // Preserve the original operation error for Express.
+      }
+    }
+
+    if (!committed && newPhotoFilename) {
+      await removeNewPhotoAfterFailure(newPhotoFilename);
     }
     return next(error);
   } finally {
-    connection.release();
+    connection?.release();
   }
 });
 
