@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
-import { Link, NavLink, useNavigate } from 'react-router-dom';
+import { Link, NavLink } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
+import useAdminSession from '../hooks/useAdminSession.js';
 import { getAdminDashboardStatistics } from '../services/adminService.js';
 import ClaimStatusBadge from '../components/ClaimStatusBadge.jsx';
 
@@ -25,7 +26,7 @@ function formatDate(value) {
 
 export default function AdminDashboardPage({ embedded = false }) {
   const { user, logout } = useAuth();
-  const navigate = useNavigate();
+  const handleUnauthorized = useAdminSession();
   const [dashboard, setDashboard] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -44,11 +45,7 @@ export default function AdminDashboardPage({ embedded = false }) {
         setDashboard(result);
       } catch (requestError) {
         if (controller.signal.aborted) return;
-        if (requestError.response?.status === 401) {
-          await logout();
-          navigate('/login', { replace: true, state: { from: '/admin/dashboard' } });
-          return;
-        }
+        if (await handleUnauthorized(requestError)) return;
         setError(requestError.response?.status === 403
           ? 'Your account is not authorized to view the admin dashboard.'
           : requestError.response?.data?.message || requestError.message || 'Unable to load dashboard data.');
@@ -56,7 +53,7 @@ export default function AdminDashboardPage({ embedded = false }) {
     }
     loadDashboard();
     return () => controller.abort();
-  }, [retryCount, logout, navigate]);
+  }, [retryCount, handleUnauthorized]);
 
   const statistics = dashboard?.statistics;
   const claimMax = Math.max(1, Number(statistics?.pendingClaims || 0), Number(statistics?.approvedClaims || 0), Number(statistics?.rejectedClaims || 0));
