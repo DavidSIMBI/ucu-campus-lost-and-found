@@ -1,9 +1,41 @@
-export default function SearchBar({ value, onChange }) {
+export default function SearchBar({ value, onChange, filters, onFilterChange = () => {} }) {
+  const keyword = value ?? filters?.keyword ?? '';
+  const updateKeyword = (nextValue) => {
+    if (onChange) onChange(nextValue);
+    else onFilterChange('keyword', nextValue);
+  };
+
   return (
-    <label className="search-box">
-      <span className="search-icon" aria-hidden="true">⌕</span>
-      <span className="visually-hidden">Search items</span>
-      <input value={value} onChange={(event) => onChange(event.target.value)} placeholder="Try “water bottle” or “library”" />
-    </label>
+    <div className="browse-filters">
+      <label className="search-box">
+        <span className="search-icon" aria-hidden="true">⌕</span>
+        <span className="visually-hidden">Search items</span>
+        <input value={keyword} onChange={(event) => updateKeyword(event.target.value)} placeholder="Search by title, location, category..." />
+      </label>
+      {filters && <>
+        <label className="filter-control">
+          <span>Type</span>
+          <select value={filters.report_type ?? 'ALL'} onChange={(event) => onFilterChange('report_type', event.target.value)}>
+            <option value="ALL">All Types</option><option value="LOST">Lost</option><option value="FOUND">Found</option>
+          </select>
+        </label>
+        <label className="filter-control">
+          <span>Category</span>
+          <select value={filters.category ?? 'ALL'} onChange={(event) => onFilterChange('category', event.target.value)}>
+            <option value="ALL">All Categories</option><option>Keys</option><option>Electronics</option><option>Books</option><option>Clothing</option><option>Other</option>
+          </select>
+        </label>
+        <label className="filter-control">
+          <span>Location</span>
+          <select value={filters.location ?? 'ALL'} onChange={(event) => onFilterChange('location', event.target.value)}>
+            <option value="ALL">All Locations</option><option>N5B</option><option>Hamu Mukasa Library</option><option>Touch of Class Restaurant</option><option>Premium Hostel</option>
+          </select>
+        </label>
+        <label className="filter-control">
+          <span>Date</span>
+          <input type="date" value={filters.event_date ?? ''} onChange={(event) => onFilterChange('event_date', event.target.value)} />
+        </label>
+      </>}
+    </div>
   );
 }
