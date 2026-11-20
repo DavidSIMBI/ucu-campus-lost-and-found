@@ -1,6 +1,9 @@
+import { getReportPhotoUrl } from '../services/reportPhoto.js';
+
 const iconByCategory = { Keys: '⌘', Electronics: '▣', Accessories: '◇', Books: '▤', Clothing: '◒' };
 
 export default function ItemCard({ item }) {
+  const photoUrl = item.photo_path ? getReportPhotoUrl(item.photo_path) : item.image;
   const reportType = item.report_type ?? item.type?.toUpperCase();
   const displayType = reportType === 'LOST' ? 'Lost' : reportType === 'FOUND' ? 'Found' : 'Report';
   const rawDate = item.event_date ?? item.date;
@@ -11,8 +14,8 @@ export default function ItemCard({ item }) {
 
   return (
     <article className="item-card">
-      <div className={`item-art art-${item.tone ?? 'green'}`}>
-        {item.image && <img src={item.image} alt={item.title} onError={(event) => event.currentTarget.parentElement.classList.add('item-art-fallback')} />}
+      <div className={`item-art art-${item.tone ?? 'green'}${photoUrl ? '' : ' item-art-fallback'}`}>
+        {photoUrl && <img src={photoUrl} alt={item.title} onError={(event) => event.currentTarget.parentElement.classList.add('item-art-fallback')} />}
         <span aria-hidden="true">{iconByCategory[item.category] ?? '◈'}</span>
       </div>
       <div className="item-details">
