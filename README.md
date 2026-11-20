@@ -2,7 +2,7 @@
 
 A beginner-friendly foundation for a web application that helps the Uganda Christian University community report lost and found items, search public listings, and request item returns through private ownership claims.
 
-This repository is the project foundation. The homepage uses clearly labeled fictional examples. Student account registration is implemented; sign-in, report management, claim review, and administration are not implemented yet.
+The homepage uses clearly labeled fictional examples. Student registration and sign-in are available, with a separate administrator role for protected administration tools.
 
 ## Technologies
 
@@ -52,6 +52,17 @@ npm run dev
 ```
 
 The API starts at `http://localhost:5000`. The health endpoint is `http://localhost:5000/api/health`.
+
+## Create an administrator account
+
+Administrator accounts are created from the backend terminal, not through public registration. First set up the database schema and backend `.env`, then run:
+
+```bash
+cd backend
+npm run admin:create
+```
+
+Enter the administrator name, email, and password when prompted. The password is hidden while you type. Administrators sign in at `/login`; their role opens the administration workspace, and administration API routes require an active `ADMIN` account.
 
 ## Set up MySQL
 

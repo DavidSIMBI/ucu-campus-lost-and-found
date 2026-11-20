@@ -164,19 +164,9 @@ router.get('/users', async (request, response, next) => {
   }
 });
 
-function evidenceFileResponse(file) {
-  return {
-    id: file.id,
-    originalFilename: file.original_filename,
-    mimeType: file.mime_type,
-    fileSize: file.file_size,
-    uploadedAt: file.uploaded_at
-  };
-}
-
 const claimSelect = `
-  SELECT c.id, c.report_id, c.claimant_id, c.status, c.justification,
-         c.reviewed_by, c.reviewed_at, c.review_note, c.created_at,
+  SELECT c.id, c.report_id, c.claimant_id, c.status, NULL AS justification,
+         c.reviewed_by, c.reviewed_at, NULL AS review_note, c.created_at,
          claimant.full_name AS claimant_name, claimant.email AS claimant_email,
          reviewer.full_name AS reviewer_name,
          r.title AS report_title, r.category AS report_category,
@@ -298,21 +288,11 @@ router.get('/claims/:id', async (request, response, next) => {
     );
     if (!rows.length) return response.status(404).json({ message: 'Claim not found.' });
 
-    const [files] = await database.execute(
-      `SELECT id, original_filename, mime_type, file_size, uploaded_at
-       FROM claim_evidence_files WHERE claim_id = ? ORDER BY id`,
-      [claimId]
-    );
-    const [legacyEvidence] = await database.execute(
-      `SELECT evidence_text FROM claim_evidence WHERE claim_id = ? LIMIT 1`,
-      [claimId]
-    );
-
     return response.json({
       claim: {
         ...adminClaimResponse(rows[0]),
-        legacyEvidenceText: legacyEvidence[0]?.evidence_text ?? null,
-        evidenceFiles: files.map(evidenceFileResponse)
+        legacyEvidenceText: null,
+        evidenceFiles: []
       }
     });
   } catch (error) {

@@ -10,6 +10,19 @@ The MySQL 8 schema includes users, reports, private report details, claims, clai
 4. Copy `../backend/.env.example` to `../backend/.env` and set valid MySQL credentials.
 5. From `backend/`, run `npm run db:check`. The command executes a read-only `SELECT 1` and exits nonzero if the connection fails.
 
+## Existing database upgrades
+
+When updating a database created from an older schema, apply the SQL files in `migrations/` using a MySQL account with `ALTER` and `CREATE` privileges. The application account can stay limited to the permissions needed at runtime. From the repository root, apply:
+
+From Windows PowerShell, run these (replace `root` if your MySQL administrator account has a different name):
+
+```powershell
+cmd.exe /c "mysql -u root -p < database\migrations\20261119_add_claim_evidence_files.sql"
+cmd.exe /c "mysql -u root -p < database\migrations\20261119_add_report_photo_path.sql"
+```
+
+These migrations add claim justification and evidence-file storage fields and the report photo path used by the current API.
+
 Do not use seed password hashes to authenticate: they are intentionally unusable.
 
 The schema and seed scripts can be rerun safely for this local demo. Seed accounts use intentionally unusable password hashes. See [database design](../documentation/database-design.md) for relationships, privacy rules, and integrity guarantees.

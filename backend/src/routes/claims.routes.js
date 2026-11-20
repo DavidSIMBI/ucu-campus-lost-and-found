@@ -179,8 +179,8 @@ router.post('/', studentOnly, parseClaimEvidence, async (request, response, next
 router.get('/mine', studentOnly, async (request, response, next) => {
   try {
     const [rows] = await database.execute(
-      `SELECT c.id, c.report_id, c.status, c.justification, c.created_at,
-              c.reviewed_at, c.review_note, reviewer.full_name AS reviewer_name,
+      `SELECT c.id, c.report_id, c.status, NULL AS justification, c.created_at,
+              c.reviewed_at, NULL AS review_note, reviewer.full_name AS reviewer_name,
               r.title AS report_title, r.category AS report_category,
               r.location AS report_location,
               DATE_FORMAT(r.event_date, '%Y-%m-%d') AS report_event_date,
@@ -247,8 +247,8 @@ router.get('/:id', studentOnly, async (request, response, next) => {
 
   try {
     const [rows] = await database.execute(
-      `SELECT c.id, c.report_id, c.status, c.justification, c.created_at,
-              c.reviewed_at, c.review_note, reviewer.full_name AS reviewer_name,
+      `SELECT c.id, c.report_id, c.status, NULL AS justification, c.created_at,
+              c.reviewed_at, NULL AS review_note, reviewer.full_name AS reviewer_name,
               r.title AS report_title, r.category AS report_category,
               r.location AS report_location,
               DATE_FORMAT(r.event_date, '%Y-%m-%d') AS report_event_date,
@@ -262,21 +262,11 @@ router.get('/:id', studentOnly, async (request, response, next) => {
 
     if (!rows.length) return response.status(404).json({ message: 'Claim not found.' });
 
-    const [files] = await database.execute(
-      `SELECT id, original_filename, mime_type, file_size, uploaded_at
-       FROM claim_evidence_files WHERE claim_id = ? ORDER BY id`,
-      [claimId]
-    );
-    const [legacyEvidence] = await database.execute(
-      `SELECT evidence_text FROM claim_evidence WHERE claim_id = ? LIMIT 1`,
-      [claimId]
-    );
-
     return response.json({
       claim: {
         ...toClaim(rows[0]),
-        legacyEvidenceText: legacyEvidence[0]?.evidence_text ?? null,
-        evidenceFiles: files.map(safeFileResponse)
+        legacyEvidenceText: null,
+        evidenceFiles: []
       }
     });
   } catch (error) {

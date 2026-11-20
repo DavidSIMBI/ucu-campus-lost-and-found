@@ -11,7 +11,10 @@ export default function ItemCard({ item }) {
 
   return (
     <article className="item-card">
-      <div className={`item-art art-${item.tone ?? 'green'}`} aria-hidden="true"><span>{iconByCategory[item.category] ?? '◈'}</span></div>
+      <div className={`item-art art-${item.tone ?? 'green'}`}>
+        {item.image && <img src={item.image} alt={item.title} onError={(event) => event.currentTarget.parentElement.classList.add('item-art-fallback')} />}
+        <span aria-hidden="true">{iconByCategory[item.category] ?? '◈'}</span>
+      </div>
       <div className="item-details">
         <div className="item-topline">
           <span className={`status status-${reportType?.toLowerCase()}`}>{displayType}</span>
