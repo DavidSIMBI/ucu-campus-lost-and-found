@@ -19,9 +19,10 @@ From Windows PowerShell, run these (replace `root` if your MySQL administrator a
 ```powershell
 cmd.exe /c "mysql -u root -p < database\migrations\20261119_add_claim_evidence_files.sql"
 cmd.exe /c "mysql -u root -p < database\migrations\20261119_add_report_photo_path.sql"
+cmd.exe /c "mysql -u root -p < database\migrations\20261120_add_user_profile_fields.sql"
 ```
 
-These migrations add claim justification and evidence-file storage fields and the report photo path used by the current API.
+These migrations add claim justification and evidence-file storage fields, the report photo path, and editable student profile fields used by the current API.
 
 Do not use seed password hashes to authenticate: they are intentionally unusable.
 

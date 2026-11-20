@@ -46,6 +46,13 @@ export function AuthProvider({ children }) {
     return response.data;
   };
 
+  const updateProfile = async (profile) => {
+    const response = await api.patch('/auth/profile', profile);
+    localStorage.setItem('user', JSON.stringify(response.data.user));
+    setUser(response.data.user);
+    return response.data;
+  };
+
   // Log out from the backend and clear the frontend session
   const logout = async () => {
     try {
@@ -72,6 +79,7 @@ export function AuthProvider({ children }) {
         isAdmin: user?.role === 'ADMIN',
         register,
         login,
+        updateProfile,
         logout
       }}
     >

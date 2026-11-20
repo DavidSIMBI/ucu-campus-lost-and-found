@@ -15,6 +15,7 @@ const scrypt = promisify(scryptCallback);
 
 const emailPattern = /^\S+@\S+\.\S+$/;
 const tokenLifetimeSeconds = 60 * 60 * 8;
+const optionalProfileColumns = ['phone', 'student_id', 'course', 'profile_photo_url'];
 
 // Return safe user information
 function publicUser(user) {
@@ -22,8 +23,39 @@ function publicUser(user) {
     id: user.id,
     fullName: user.full_name,
     email: user.email,
-    role: user.role
+    role: user.role,
+    phone: user.phone ?? null,
+    studentId: user.student_id ?? null,
+    course: user.course ?? null,
+    profilePhotoUrl: user.profile_photo_url ?? null
   };
+}
+
+async function getProfileColumns() {
+  const [rows] = await database.execute(
+    `SELECT COLUMN_NAME
+     FROM information_schema.COLUMNS
+     WHERE TABLE_SCHEMA = DATABASE()
+       AND TABLE_NAME = 'users'
+       AND COLUMN_NAME IN (?, ?, ?, ?)`,
+    optionalProfileColumns
+  );
+  return new Set(rows.map((row) => row.COLUMN_NAME));
+}
+
+async function getUserProfile(userId, columns = null) {
+  const available = columns ?? await getProfileColumns();
+  const selectOptional = (column) => available.has(column) ? column : `NULL AS ${column}`;
+  const [rows] = await database.execute(
+    `SELECT id, full_name, email, role,
+            ${selectOptional('phone')},
+            ${selectOptional('student_id')},
+            ${selectOptional('course')},
+            ${selectOptional('profile_photo_url')}
+     FROM users WHERE id = ? LIMIT 1`,
+    [userId]
+  );
+  return rows[0] ?? null;
 }
 
 // Hash passwords before storing them
@@ -212,22 +244,108 @@ router.post('/login', async (request, response, next) => {
 // GET CURRENTLY LOGGED-IN USER
 router.get('/me', authenticate, async (request, response, next) => {
   try {
-    const [rows] = await database.execute(
-      `SELECT id, full_name, email, role
-       FROM users
-       WHERE id = ?
-       LIMIT 1`,
-      [request.user.id]
-    );
-
-    if (!rows[0]) {
+    const user = await getUserProfile(request.user.id);
+    if (!user) {
       return response.status(404).json({
         message: 'User account not found.'
       });
     }
 
     return response.json({
-      user: publicUser(rows[0])
+      user: publicUser(user)
+    });
+  } catch (error) {
+    return next(error);
+  }
+});
+
+router.patch('/profile', authenticate, async (request, response, next) => {
+  const body = request.body;
+  const allowedFields = ['fullName', 'phone', 'studentId', 'course', 'profilePhotoUrl'];
+  if (!body || typeof body !== 'object' || Array.isArray(body) ||
+      Object.keys(body).some((field) => !allowedFields.includes(field)) ||
+      typeof body.fullName !== 'string') {
+    return response.status(400).json({ message: 'Submit a full name and supported profile fields.' });
+  }
+
+  const fullName = body.fullName.trim();
+  const phone = typeof body.phone === 'string' ? body.phone.trim() : '';
+  const studentId = typeof body.studentId === 'string' ? body.studentId.trim() : '';
+  const course = typeof body.course === 'string' ? body.course.trim() : '';
+  const profilePhotoUrl = typeof body.profilePhotoUrl === 'string' ? body.profilePhotoUrl.trim() : '';
+
+  if (fullName.length < 2 || fullName.length > 120) {
+    return response.status(400).json({ message: 'Enter a name between 2 and 120 characters.' });
+  }
+  if (phone.length > 30 || studentId.length > 40 || course.length > 120 || profilePhotoUrl.length > 2048) {
+    return response.status(400).json({ message: 'One or more profile fields are too long.' });
+  }
+  if (profilePhotoUrl) {
+    try {
+      const url = new URL(profilePhotoUrl);
+      if (!['http:', 'https:'].includes(url.protocol)) throw new Error('Invalid scheme');
+    } catch {
+      return response.status(400).json({ message: 'Enter a valid HTTP or HTTPS profile photo URL.' });
+    }
+  }
+
+  try {
+    const columns = await getProfileColumns();
+    const valuesByColumn = {
+      phone: phone || null,
+      student_id: studentId || null,
+      course: course || null,
+      profile_photo_url: profilePhotoUrl || null
+    };
+    const requestedProfileValues = {
+      phone,
+      student_id: studentId,
+      course,
+      profile_photo_url: profilePhotoUrl
+    };
+    const missingFields = Object.entries(requestedProfileValues)
+      .filter(([column, value]) => value && !columns.has(column))
+      .map(([column]) => column);
+
+    if (missingFields.length) {
+      return response.status(409).json({
+        message: 'These profile fields are not available yet, so your changes were not saved. Contact the system administrator.'
+      });
+    }
+
+    const updates = ['full_name = ?'];
+    const values = [fullName];
+    for (const column of optionalProfileColumns) {
+      if (columns.has(column)) {
+        updates.push(`${column} = ?`);
+        values.push(valuesByColumn[column]);
+      }
+    }
+    values.push(request.user.id);
+
+    await database.execute(`UPDATE users SET ${updates.join(', ')} WHERE id = ?`, values);
+    const user = await getUserProfile(request.user.id, columns);
+    return response.json({ user: publicUser(user), message: 'Profile updated successfully.' });
+  } catch (error) {
+    return next(error);
+  }
+});
+
+router.get('/summary', authenticate, async (request, response, next) => {
+  try {
+    const [rows] = await database.execute(
+      `SELECT
+         (SELECT COUNT(*) FROM reports WHERE reporter_id = ?) AS my_reports,
+         (SELECT COUNT(*) FROM claims WHERE claimant_id = ?) AS my_claims,
+         (SELECT COUNT(*) FROM reports WHERE reporter_id = ? AND report_type = 'FOUND') AS found_items`,
+      [request.user.id, request.user.id, request.user.id]
+    );
+    return response.json({
+      summary: {
+        myReports: Number(rows[0].my_reports),
+        myClaims: Number(rows[0].my_claims),
+        foundItems: Number(rows[0].found_items)
+      }
     });
   } catch (error) {
     return next(error);

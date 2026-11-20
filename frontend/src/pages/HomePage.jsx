@@ -1,16 +1,24 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import ItemCard from '../components/ItemCard.jsx';
-import SearchBar from '../components/SearchBar.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 import { sampleItems } from '../data/sampleItems.js';
 
 export default function HomePage() {
   const { isAuthenticated } = useAuth();
   const [query, setQuery] = useState('');
-  const matches = useMemo(() => sampleItems.filter((item) => `${item.title} ${item.location} ${item.category}`.toLowerCase().includes(query.toLowerCase())), [query]);
-  const reportHref = isAuthenticated ? '/report' : '/login';
+  const recentItemsRef = useRef(null);
+  const matches = useMemo(() => sampleItems.filter((item) => `${item.title} ${item.description ?? ''} ${item.location} ${item.category}`.toLowerCase().includes(query.trim().toLowerCase())), [query]);
+  const reportHref = (type) => isAuthenticated ? `/report?type=${type}` : '/login';
+  const loginReturnToReport = (type) => isAuthenticated ? undefined : { from: { pathname: '/report', search: `?type=${type}` } };
   const accountHref = isAuthenticated ? '/account' : '/register';
+  const returnedCount = sampleItems.filter((item) => item.status === 'RETURNED').length;
+  const stillLostCount = sampleItems.filter((item) => item.report_type === 'LOST' && item.status === 'OPEN').length;
+
+  function handleSearch(event) {
+    event.preventDefault();
+    recentItemsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
 
   return (
     <>
@@ -28,6 +36,14 @@ export default function HomePage() {
                 {isAuthenticated ? 'My account' : 'Create an account'}
               </Link>
             </div>
+            <form className="home-search" role="search" onSubmit={handleSearch}>
+              <label className="home-search-field">
+                <span className="home-search-icon" aria-hidden="true">⌕</span>
+                <span className="visually-hidden">Search reported items</span>
+                <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="ID, phone, wallet, keys…" />
+              </label>
+              <button className="home-search-button" type="submit">Search</button>
+            </form>
           </div>
         </div>
         <div className="home-hero-footer">
@@ -45,43 +61,45 @@ export default function HomePage() {
           <p>Use the report form to share the details needed to identify an item.</p>
         </div>
         <div className="home-action-grid">
-          <Link to={reportHref} className="home-action-card home-action-lost">
+          <article className="home-action-card home-action-lost">
+            <span className="home-action-icon home-action-icon-lost" aria-hidden="true">!</span>
             <span className="home-action-copy">
               <span className="home-action-type">LOST ITEM</span>
               <strong>I lost something</strong>
-              <small>Submit a lost-item report with its description and last known location.</small>
+              <small>Tell the campus where and when you last saw it.</small>
             </span>
-            <span className="home-action-cta">
-              {isAuthenticated ? 'Open report form' : 'Sign in to report'}
-            </span>
-          </Link>
-          <Link to={reportHref} className="home-action-card home-action-found">
+            <Link to={reportHref('LOST')} state={loginReturnToReport('LOST')} className="home-action-cta home-action-cta-lost">{isAuthenticated ? 'Report lost item' : 'Sign in to report'} <span aria-hidden="true">↗</span></Link>
+          </article>
+          <article className="home-action-card home-action-found">
+            <span className="home-action-icon home-action-icon-found" aria-hidden="true">✓</span>
             <span className="home-action-copy">
               <span className="home-action-type">FOUND ITEM</span>
               <strong>I found something</strong>
-              <small>Choose “I found an item” on the form, then add where and when you found it.</small>
+              <small>Share where it was found so it can reach its owner.</small>
             </span>
-            <span className="home-action-cta">
-              {isAuthenticated ? 'Open report form' : 'Sign in to report'}
-            </span>
-          </Link>
+            <Link to={reportHref('FOUND')} state={loginReturnToReport('FOUND')} className="home-action-cta home-action-cta-found">{isAuthenticated ? 'Report found item' : 'Sign in to report'} <span aria-hidden="true">↗</span></Link>
+          </article>
         </div>
       </section>
 
-      <section className="listings-section home-listings">
+      <section className="listings-section home-listings" id="recently-reported" ref={recentItemsRef}>
         <div className="section-shell">
           <div className="listings-heading">
             <div>
-              <p className="section-label">Demonstration listings</p>
-              <h2>Recent items</h2>
+              <p className="section-label">DEMO STATISTICS</p>
+              <h2>Recently reported</h2>
             </div>
             <Link to="/items" className="text-link">Browse all items</Link>
           </div>
-          <SearchBar value={query} onChange={setQuery} />
-          <p className="sample-note">These fictional examples are for demonstration and are not live database records.</p>
+          <div className="home-demo-stats" aria-label="Sample listing statistics">
+            <span><strong>{sampleItems.length}</strong> Items reported</span>
+            <span><strong>{returnedCount}</strong> Returned</span>
+            <span><strong>{stillLostCount}</strong> Still lost</span>
+          </div>
+          <p className="sample-note">Fictional sample listings and counts for demonstration; these are not live database records.</p>
           {matches.length > 0 ? (
             <div className="item-grid">
-              {matches.map((item) => <ItemCard key={item.id} item={item} />)}
+              {matches.slice(0, 3).map((item) => <ItemCard key={item.id} item={item} />)}
             </div>
           ) : (
             <p className="empty-state">No sample items match “{query}”. Try another search.</p>

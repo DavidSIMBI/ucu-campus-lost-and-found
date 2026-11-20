@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Alert,
   Box,
@@ -34,8 +34,10 @@ const descriptionFieldSx = {
 
 export default function ReportPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const requestedType = searchParams.get('type')?.toUpperCase();
   const [form, setForm] = useState({
-    reportType: 'LOST',
+    reportType: requestedType === 'FOUND' ? 'FOUND' : 'LOST',
     title: '',
     description: '',
     category: 'Electronics',

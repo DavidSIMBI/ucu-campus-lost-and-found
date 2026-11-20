@@ -71,6 +71,50 @@
 .account-section-content-admin .admin-dashboard-embedded .admin-welcome-card{margin-bottom:22px}
 @media(max-width:640px){.account-page{padding-top:30px;padding-bottom:50px}.account-welcome{align-items:flex-start;flex-direction:column}.account-section-nav{margin-right:-2px;margin-left:-2px}.account-section-tab{padding:10px 12px}.account-personal-fields{grid-template-columns:minmax(0,1fr)}.account-personal-panel,.account-activity{padding:18px}.account-section-content>.module-page,.account-section-content>.my-reports-page{padding-top:6px}.account-section-content>.module-page .module-heading,.account-section-content>.my-reports-page .my-reports-header{align-items:flex-start;flex-direction:column}.account-section-content>.module-page .module-heading>.button,.account-section-content>.my-reports-page .my-reports-create{width:100%}.account-section-content-admin .admin-dashboard-embedded .admin-recent-grid{grid-template-columns:minmax(0,1fr)}}
 
+.account-summary-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin:0 0 22px}
+.account-summary-card{display:grid;grid-template-columns:1fr auto;gap:6px 12px;min-height:112px;border:1px solid var(--line);border-radius:7px;background:#fff;padding:17px 19px}
+.account-summary-card>span{align-self:center;color:var(--muted);font-size:12px;font-weight:650}
+.account-summary-card>strong{grid-column:2;grid-row:1 / span 2;align-self:center;color:var(--green);font-family:Manrope,'DM Sans',sans-serif;font-size:34px;line-height:1}
+.account-summary-card>a{align-self:end;color:var(--green);font-size:11px;font-weight:700}
+.account-summary-gold{background:#fffdf8}.account-summary-gold>strong{color:#8a6b23}.account-summary-blue{background:#f8fbfd}.account-summary-blue>strong{color:#476685}
+.account-workspace{display:grid;grid-template-columns:245px minmax(0,1fr);align-items:start;gap:20px}
+.account-sidebar{display:grid;gap:12px;min-width:0}
+.account-profile-card{display:grid;justify-items:center;gap:8px;border:1px solid var(--line);border-radius:7px;background:#fff;padding:22px 18px;text-align:center}
+.account-avatar{position:relative;display:grid;width:88px;height:88px;place-items:center;overflow:hidden;border:4px solid #eaf1eb;border-radius:50%;background:#dce9df;color:var(--green);font-family:Manrope,'DM Sans',sans-serif;font-size:27px;font-weight:800;letter-spacing:-.04em}
+.account-avatar img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.account-avatar>span{position:relative;z-index:0}
+.account-avatar img:not([src=""])+span{z-index:-1}
+.account-profile-card>strong{max-width:100%;overflow-wrap:anywhere;color:var(--ink);font-family:Manrope,'DM Sans',sans-serif;font-size:17px}
+.account-profile-email{max-width:100%;overflow-wrap:anywhere;color:var(--muted);font-size:11px}
+.account-role-pill{margin-top:3px;border-radius:999px;background:#eef4ef;padding:5px 10px;color:#42604c;font-size:10px;font-weight:700}
+.account-profile-edit{width:100%;margin-top:4px;border:1px solid #dbe5dc;border-radius:4px;background:#fff;padding:9px;color:var(--green);font:700 11px 'DM Sans',Arial,sans-serif;cursor:pointer}
+.account-profile-edit:hover{background:#f4f8f4}
+.account-workspace .account-section-nav{display:grid;gap:3px;margin:0;padding:7px;border:1px solid var(--line);border-radius:7px;background:#fff}
+.account-workspace .account-section-tab{width:100%;text-align:left}
+.account-section-content{min-width:0}
+.account-personal-panel{min-height:290px}
+.account-panel-heading{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:18px}
+.account-panel-heading h2{margin:0;font-family:Manrope,'DM Sans',sans-serif;font-size:22px;letter-spacing:-.025em}
+.account-panel-heading .section-label{margin:0 0 5px}
+.account-edit-trigger{flex:0 0 auto}
+.account-edit-backdrop{position:fixed;z-index:100;inset:0;display:grid;place-items:center;overflow:auto;background:rgba(12,30,22,.55);padding:24px}
+.account-edit-dialog{width:min(620px,100%);max-height:min(90vh,820px);overflow:auto;border:1px solid #e0e7e1;border-radius:9px;background:#fff;padding:clamp(20px,4vw,30px);box-shadow:0 24px 80px rgba(11,31,22,.25)}
+.account-edit-dialog>header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:18px}
+.account-edit-dialog>header h2{margin:0;font-family:Manrope,'DM Sans',sans-serif;font-size:25px}
+.account-edit-dialog>header .section-label{margin-bottom:5px}
+.account-edit-close{width:34px;height:34px;border:0;border-radius:50%;background:#f1f4f1;color:#41564a;font-size:23px;line-height:1;cursor:pointer}
+.account-edit-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.account-edit-form label{display:grid;gap:6px;color:#43584d;font-size:11px;font-weight:700}
+.account-edit-form input{width:100%;min-height:42px;border:1px solid #d8e1da;border-radius:4px;background:#fff;padding:9px 11px;color:var(--ink);font:400 12px 'DM Sans',Arial,sans-serif}
+.account-edit-form input:focus{outline:3px solid rgba(229,181,75,.35);border-color:#b99a4c}
+.account-edit-wide,.account-edit-help,.account-edit-actions{grid-column:1 / -1}
+.account-edit-help{margin:0;color:var(--muted);font-size:11px;line-height:1.5}
+.account-edit-actions{display:flex;justify-content:flex-end;gap:9px;padding-top:5px}
+.account-edit-cancel{border:1px solid var(--line);background:#fff;color:var(--ink)}
+.account-edit-cancel:hover{background:#f4f6f4}
+@media(max-width:800px){.account-workspace{grid-template-columns:minmax(0,1fr)}.account-sidebar{grid-template-columns:minmax(180px,.7fr) minmax(0,1.3fr);align-items:stretch}.account-workspace .account-section-nav{align-content:start}.account-summary-card{min-height:100px}}
+@media(max-width:560px){.account-summary-grid{gap:8px}.account-summary-card{grid-template-columns:1fr;min-height:100px;padding:12px}.account-summary-card>strong{grid-column:1;grid-row:auto;grid-row:2;font-size:27px}.account-summary-card>a{display:none}.account-sidebar{grid-template-columns:minmax(0,1fr)}.account-profile-card{grid-template-columns:64px minmax(0,1fr);justify-items:start;align-items:center;gap:3px 12px;padding:14px;text-align:left}.account-avatar{grid-column:1;grid-row:1 / span 3;width:62px;height:62px;font-size:20px}.account-profile-card>strong,.account-profile-email,.account-role-pill{grid-column:2}.account-role-pill{margin-top:2px}.account-profile-edit{grid-column:1 / -1}.account-workspace .account-section-nav{display:flex;overflow-x:auto}.account-workspace .account-section-tab{width:auto;text-align:center}.account-edit-form{grid-template-columns:minmax(0,1fr)}.account-edit-wide,.account-edit-help,.account-edit-actions{grid-column:1}}
+
 /* Student account overview — scoped so report, claims and admin views keep their styles. */
 .student-overview {
   display: grid;

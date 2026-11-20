@@ -3,26 +3,26 @@ import { createTheme } from '@mui/material/styles';
 export const reportManagementTheme = createTheme({
   palette: {
     primary: {
-      main: '#174b3a',
-      dark: '#10392d',
-      light: '#e5efe8',
+      main: '#214d68',
+      dark: '#142f45',
+      light: '#e5edf3',
       contrastText: '#ffffff'
     },
     secondary: {
-      main: '#6f8c76',
-      light: '#edf3ee',
-      dark: '#496451'
+      main: '#398078',
+      light: '#e5f1ef',
+      dark: '#2d6c65'
     },
     background: {
-      default: '#f4f7f3',
+      default: '#f4f7f9',
       paper: '#ffffff'
     },
     text: {
-      primary: '#19332b',
-      secondary: '#677870'
+      primary: '#172e42',
+      secondary: '#66798a'
     },
-    divider: '#e1e8e2',
-    success: { main: '#356344' },
+    divider: '#e1e7ec',
+    success: { main: '#27766e' },
     warning: { main: '#876b27' },
     error: { main: '#9a393e' }
   },
@@ -59,17 +59,17 @@ export const reportManagementTheme = createTheme({
           borderRadius: 8,
           backgroundColor: '#ffffff'
         },
-        notchedOutline: { borderColor: '#d5e0d8' }
+        notchedOutline: { borderColor: '#d7e0e7' }
       }
     },
     MuiCard: {
       styleOverrides: {
-        root: { borderColor: '#e1e8e2', boxShadow: '0 5px 20px rgba(25, 51, 43, 0.035)' }
+        root: { borderColor: '#e1e7ec', boxShadow: '0 5px 20px rgba(23, 46, 66, 0.035)' }
       }
     },
     MuiPaper: {
       styleOverrides: {
-        outlined: { borderColor: '#e1e8e2' }
+        outlined: { borderColor: '#e1e7ec' }
       }
     }
   }

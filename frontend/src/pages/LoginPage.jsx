@@ -1,11 +1,12 @@
 
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 
 export default function LoginPage() {
   const { login } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -21,7 +22,9 @@ export default function LoginPage() {
       const response = await login(email, password);
       const destination = response.user?.role === 'ADMIN'
         ? '/account?section=admin-overview'
-        : '/account?section=overview';
+        : location.state?.from?.pathname
+          ? `${location.state.from.pathname}${location.state.from.search || ''}${location.state.from.hash || ''}`
+          : '/account?section=overview';
       navigate(destination, { replace: true });
     } catch (err) {
       setError(
