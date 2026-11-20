@@ -18,6 +18,7 @@ export default function BrowsePage() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [retryCount, setRetryCount] = useState(0);
   const [filters, setFilters] = useState(() => ({
     ...initialFilters,
     keyword: searchParams.get('search') || ''
@@ -27,6 +28,8 @@ export default function BrowsePage() {
   useEffect(() => {
     let active = true;
     const controller = new AbortController();
+    setLoading(true);
+    setError('');
     api.get('/reports/public', { signal: controller.signal })
       .then((response) => {
         if (!Array.isArray(response.data?.reports)) {
@@ -44,7 +47,9 @@ export default function BrowsePage() {
         if (active && !controller.signal.aborted) {
           setError(
             requestError.response?.data?.message ||
-            requestError.message ||
+            (requestError.code === 'ERR_NETWORK'
+              ? 'Cannot reach the listings service. Check that the API server is running and that its URL is configured correctly.'
+              : requestError.message) ||
             'We could not load public listings. Please refresh the page to try again.'
           );
         }
@@ -56,7 +61,7 @@ export default function BrowsePage() {
       active = false;
       controller.abort();
     };
-  }, []);
+  }, [retryCount]);
 
   const updateFilter = (name, value) => setFilters((current) => ({ ...current, [name]: value }));
   const clearFilters = () => setFilters({ ...initialFilters });
@@ -114,7 +119,7 @@ export default function BrowsePage() {
         <div className="browse-state browse-state-error" role="alert">
           <strong>Listings could not be loaded</strong>
           <p>{error}</p>
-          <button className="button button-small" type="button" onClick={() => window.location.reload()}>Try again</button>
+          <button className="button button-small" type="button" onClick={() => setRetryCount((count) => count + 1)}>Try again</button>
         </div>
       ) : items.length === 0 ? (
         <div className="browse-state">There are no listings to show yet.</div>
