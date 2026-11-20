@@ -1,4 +1,5 @@
 import { getReportPhotoUrl } from '../services/reportPhoto.js';
+import { Link } from 'react-router-dom';
 
 const iconByCategory = { Keys: '⌘', Electronics: '▣', Accessories: '◇', Books: '▤', Clothing: '◒' };
 
@@ -11,6 +12,9 @@ export default function ItemCard({ item }) {
     ? new Intl.DateTimeFormat(undefined, { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(`${rawDate}T00:00:00`))
     : rawDate;
   const status = item.status?.toUpperCase();
+  const detailsHref = item.photo_path && reportType === 'FOUND'
+    ? `/found-items/${item.id}`
+    : `/items?search=${encodeURIComponent(item.title || '')}`;
 
   return (
     <article className="item-card">
@@ -26,10 +30,11 @@ export default function ItemCard({ item }) {
         <h3>{item.title}</h3>
         <p className="item-location"><span aria-hidden="true">⌖</span> {item.location}</p>
         {item.description && <p className="item-description">{item.description}</p>}
-        {status === 'OPEN' && <span className="item-status item-status-open">Open</span>}
+        {status === 'OPEN' && <span className="item-status item-status-open">{reportType === 'FOUND' ? 'Available' : 'Still lost'}</span>}
         {status === 'RETURNED' && <span className="item-status item-status-returned">Returned</span>}
         {status === 'CLOSED' && <span className="item-status item-status-closed">Closed</span>}
         <span className="category">{item.category}</span>
+        <Link className="item-card-action" to={detailsHref}>View Details <span aria-hidden="true">↗</span></Link>
       </div>
     </article>
   );

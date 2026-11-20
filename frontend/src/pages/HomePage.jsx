@@ -96,7 +96,6 @@ export default function HomePage() {
             <span><strong>{returnedCount}</strong> Returned</span>
             <span><strong>{stillLostCount}</strong> Still lost</span>
           </div>
-          <p className="sample-note">Fictional sample listings and counts for demonstration; these are not live database records.</p>
           {matches.length > 0 ? (
             <div className="item-grid">
               {matches.slice(0, 3).map((item) => <ItemCard key={item.id} item={item} />)}

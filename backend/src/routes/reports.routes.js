@@ -13,8 +13,28 @@ import {
 const router = Router();
 const MYSQL_TEXT_MAX_BYTES = 65535;
 
+async function hasReportPhotoColumn() {
+  const [rows] = await database.execute(
+    `SELECT 1 AS present
+     FROM information_schema.COLUMNS
+     WHERE TABLE_SCHEMA = DATABASE()
+       AND TABLE_NAME = 'reports'
+       AND COLUMN_NAME = 'photo_path'
+     LIMIT 1`
+  );
+  return rows.length > 0;
+}
+
+function reportPhotoSelect(alias = '') {
+  const column = alias ? `${alias}.photo_path` : 'photo_path';
+  return `CASE WHEN ${column} IS NULL THEN NULL
+          ELSE CONCAT('/uploads/reports/', ${column}) END AS photo_path`;
+}
+
 router.get('/public', async (_request, response, next) => {
   try {
+    const photoColumnExists = await hasReportPhotoColumn();
+    const photoSelect = photoColumnExists ? reportPhotoSelect('r') : 'NULL AS photo_path';
     const [reports] = await database.execute(
       `
         SELECT
@@ -25,8 +45,7 @@ router.get('/public', async (_request, response, next) => {
           r.category,
           r.location,
           DATE_FORMAT(r.event_date, '%Y-%m-%d') AS event_date,
-          CASE WHEN r.photo_path IS NULL THEN NULL
-            ELSE CONCAT('/uploads/reports/', r.photo_path) END AS photo_path,
+          ${photoSelect},
           r.status,
           r.created_at
         FROM reports r
@@ -189,6 +208,9 @@ function validateReportUpdate(body) {
 router.get('/', async (request, response, next) => {
   try {
     const { type, search } = request.query;
+    const photoSelect = (await hasReportPhotoColumn())
+      ? reportPhotoSelect('r')
+      : 'NULL AS photo_path';
 
     let sql = `
       SELECT
@@ -199,8 +221,7 @@ router.get('/', async (request, response, next) => {
         r.category,
         r.location,
         r.event_date,
-        CASE WHEN r.photo_path IS NULL THEN NULL
-          ELSE CONCAT('/uploads/reports/', r.photo_path) END AS photo_path,
+        ${photoSelect},
         r.status,
         r.created_at,
         u.full_name AS reporter_name
@@ -242,6 +263,9 @@ router.get('/', async (request, response, next) => {
 // GET REPORTS CREATED BY THE AUTHENTICATED USER
 router.get('/mine', async (request, response, next) => {
   try {
+    const photoSelect = (await hasReportPhotoColumn())
+      ? reportPhotoSelect()
+      : 'NULL AS photo_path';
     const [reports] = await database.execute(
       `
         SELECT
@@ -252,8 +276,7 @@ router.get('/mine', async (request, response, next) => {
           category,
           location,
           event_date,
-          CASE WHEN photo_path IS NULL THEN NULL
-            ELSE CONCAT('/uploads/reports/', photo_path) END AS photo_path,
+          ${photoSelect},
           status,
           created_at
         FROM reports
@@ -280,6 +303,9 @@ router.get('/:id/edit', async (request, response, next) => {
   }
 
   try {
+    const photoSelect = (await hasReportPhotoColumn())
+      ? reportPhotoSelect()
+      : 'NULL AS photo_path';
     const [reports] = await database.execute(
       `
         SELECT
@@ -290,8 +316,7 @@ router.get('/:id/edit', async (request, response, next) => {
           category,
           location,
           event_date,
-          CASE WHEN photo_path IS NULL THEN NULL
-            ELSE CONCAT('/uploads/reports/', photo_path) END AS photo_path,
+          ${photoSelect},
           status
         FROM reports
         WHERE id = ? AND reporter_id = ?
@@ -363,6 +388,9 @@ router.get('/:id', async (request, response, next) => {
       });
     }
 
+    const photoSelect = (await hasReportPhotoColumn())
+      ? reportPhotoSelect('r')
+      : 'NULL AS photo_path';
     const [reports] = await database.execute(
       `
         SELECT
@@ -373,8 +401,7 @@ router.get('/:id', async (request, response, next) => {
           r.category,
           r.location,
           r.event_date,
-          CASE WHEN r.photo_path IS NULL THEN NULL
-            ELSE CONCAT('/uploads/reports/', r.photo_path) END AS photo_path,
+          ${photoSelect},
           r.status,
           r.created_at,
           u.full_name AS reporter_name

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import ItemCard from '../components/ItemCard.jsx';
 import SearchBar from '../components/SearchBar.jsx';
 import { api } from '../services/api.js';
@@ -13,10 +14,14 @@ const initialFilters = {
 };
 
 export default function BrowsePage() {
+  const [searchParams] = useSearchParams();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [filters, setFilters] = useState(initialFilters);
+  const [filters, setFilters] = useState(() => ({
+    ...initialFilters,
+    keyword: searchParams.get('search') || ''
+  }));
   const [sortBy, setSortBy] = useState('newest');
 
   useEffect(() => {
