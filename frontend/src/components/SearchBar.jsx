@@ -1,4 +1,12 @@
-export default function SearchBar({ value, onChange, filters, onFilterChange = () => {} }) {
+export default function SearchBar({
+  value,
+  onChange,
+  filters,
+  onFilterChange = () => {},
+  categories = ['Keys', 'Electronics', 'Books', 'Clothing', 'Other'],
+  locations = ['N5B', 'Hamu Mukasa Library', 'Touch of Class Restaurant', 'Premium Hostel'],
+  statuses = ['OPEN', 'RETURNED', 'CLOSED']
+}) {
   const keyword = value ?? filters?.keyword ?? '';
   const updateKeyword = (nextValue) => {
     if (onChange) onChange(nextValue);
@@ -22,19 +30,26 @@ export default function SearchBar({ value, onChange, filters, onFilterChange = (
         <label className="filter-control">
           <span>Category</span>
           <select value={filters.category ?? 'ALL'} onChange={(event) => onFilterChange('category', event.target.value)}>
-            <option value="ALL">All Categories</option><option>Keys</option><option>Electronics</option><option>Books</option><option>Clothing</option><option>Other</option>
+            <option value="ALL">All Categories</option>
+            {categories.map((category) => <option key={category} value={category}>{category}</option>)}
           </select>
         </label>
         <label className="filter-control">
           <span>Location</span>
           <select value={filters.location ?? 'ALL'} onChange={(event) => onFilterChange('location', event.target.value)}>
-            <option value="ALL">All Locations</option><option>N5B</option><option>Hamu Mukasa Library</option><option>Touch of Class Restaurant</option><option>Premium Hostel</option>
+            <option value="ALL">All Locations</option>
+            {locations.map((location) => <option key={location} value={location}>{location}</option>)}
           </select>
         </label>
         <label className="filter-control">
           <span>Status</span>
           <select value={filters.status ?? 'ALL'} onChange={(event) => onFilterChange('status', event.target.value)}>
-            <option value="ALL">All Statuses</option><option value="OPEN">Open</option><option value="RETURNED">Returned</option><option value="CLOSED">Closed</option>
+            <option value="ALL">All Statuses</option>
+            {statuses.map((status) => (
+              <option key={status} value={status}>
+                {status.charAt(0) + status.slice(1).toLowerCase()}
+              </option>
+            ))}
           </select>
         </label>
         <label className="filter-control">

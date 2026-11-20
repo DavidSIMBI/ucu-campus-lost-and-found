@@ -13,6 +13,34 @@ import {
 const router = Router();
 const MYSQL_TEXT_MAX_BYTES = 65535;
 
+router.get('/public', async (_request, response, next) => {
+  try {
+    const [reports] = await database.execute(
+      `
+        SELECT
+          r.id,
+          r.report_type,
+          r.title,
+          r.description,
+          r.category,
+          r.location,
+          DATE_FORMAT(r.event_date, '%Y-%m-%d') AS event_date,
+          CASE WHEN r.photo_path IS NULL THEN NULL
+            ELSE CONCAT('/uploads/reports/', r.photo_path) END AS photo_path,
+          r.status,
+          r.created_at
+        FROM reports r
+        WHERE r.status <> 'CLOSED'
+        ORDER BY r.created_at DESC
+      `
+    );
+
+    return response.json({ reports });
+  } catch (error) {
+    return next(error);
+  }
+});
+
 router.use(authenticate);
 
 function exceedsMysqlTextLimit(value) {
