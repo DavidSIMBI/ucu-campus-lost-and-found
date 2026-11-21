@@ -10,9 +10,20 @@ import superAdminRoutes from './routes/super-admin.routes.js';
 import { notFound, errorHandler } from './middleware/error-handler.js';
 
 const app = express();
-const allowedOrigin = process.env.FRONTEND_ORIGIN || 'http://localhost:5173';
+const allowedOrigins = (process.env.FRONTEND_ORIGIN || 'http://localhost:5173')
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean);
 
-app.use(cors({ origin: allowedOrigin }));
+if (allowedOrigins.length === 0 || allowedOrigins.includes('*')) {
+  throw new Error('FRONTEND_ORIGIN must contain one or more explicit origins; wildcards are not allowed.');
+}
+
+app.use(cors({
+  origin: allowedOrigins,
+  methods: ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE'],
+  allowedHeaders: ['Authorization', 'Content-Type']
+}));
 app.use(express.json({ limit: '100kb' }));
 app.use(
   '/uploads/reports',
