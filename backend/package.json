@@ -7,7 +7,8 @@
     "start": "node server.js",
     "dev": "node --watch-path=server.js --watch-path=src server.js",
     "db:check": "node scripts/check-database.js",
-    "admin:create": "node scripts/create-admin.js"
+    "super-admin:bootstrap": "node scripts/bootstrap-super-admin.js",
+    "test": "node --test"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",

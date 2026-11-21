@@ -54,7 +54,7 @@ export function hasActiveClaim(rows) {
 }
 
 export function canAccessEvidence(role, claimantId, userId) {
-  return role === 'ADMIN' || Number(claimantId) === Number(userId);
+  return role === 'ADMIN' || role === 'SUPER_ADMIN' || Number(claimantId) === Number(userId);
 }
 
 export function getReviewStatus(decision) {

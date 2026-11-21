@@ -35,3 +35,38 @@ export async function getAdminUsers({ role = '', search = '', page = 1, limit = 
   });
   return response.data;
 }
+
+export async function getManagedAdmins(search = '', options = {}) {
+  const response = await api.get('/super-admin/admins', { params: { search: search || undefined }, ...options });
+  return response.data.admins;
+}
+
+export async function createManagedAdmin(account) {
+  const response = await api.post('/super-admin/admins', account);
+  return response.data.admin;
+}
+
+export async function setManagedAdminStatus(id, isActive) {
+  const response = await api.patch(`/super-admin/admins/${id}/status`, { isActive });
+  return response.data.admin;
+}
+
+export async function setManagedAdminRole(id, role) {
+  const response = await api.patch(`/super-admin/admins/${id}/role`, { role });
+  return response.data.admin;
+}
+
+export async function getAdminAudit({ page = 1, limit = 25, signal } = {}) {
+  const response = await api.get('/super-admin/audit', { params: { page, limit }, signal });
+  return response.data;
+}
+
+export async function getAdminSettings(options = {}) {
+  const response = await api.get('/super-admin/settings', options);
+  return response.data.settings;
+}
+
+export async function setAdminSetting(key, value) {
+  const response = await api.patch(`/super-admin/settings/${encodeURIComponent(key)}`, { value });
+  return response.data.setting;
+}

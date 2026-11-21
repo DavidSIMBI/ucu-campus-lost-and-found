@@ -49,13 +49,15 @@ test('claims and admin APIs enforce ownership and state using isolated database 
   let lastStorageKey;
   let reviewDecision;
   let handoverUpdated = false;
+  let auditWrites = 0;
 
   const executeMock = mock.method(database, 'execute', async (sql, values = []) => {
-    if (sql.includes('SELECT id, role, token_version')) {
+    if (sql.includes('SELECT id, role, token_version, is_active')) {
       const id = Number(values[0]);
-      return [[{ id, role: id === 2 ? 'ADMIN' : 'STUDENT', token_version: 0 }], []];
+      return [[{ id, role: id === 2 ? 'ADMIN' : 'STUDENT', token_version: 0, is_active: 1 }], []];
     }
     if (sql.includes('FROM users WHERE role = \'STUDENT\'')) return [[{ total: 8 }], []];
+    if (sql.includes('FROM users WHERE role = \'SUPER_ADMIN\'')) return [[{ total: 1 }], []];
     if (sql.includes('SELECT COUNT(*) AS total FROM users')) return [[{ total: 10 }], []];
     if (sql.includes('FROM reports WHERE report_type = \'LOST\'')) return [[{ total: 3 }], []];
     if (sql.includes('FROM reports WHERE report_type = \'FOUND\'')) return [[{ total: 4 }], []];
@@ -90,6 +92,10 @@ test('claims and admin APIs enforce ownership and state using isolated database 
     async rollback() {},
     release() {},
     async execute(sql, values = []) {
+      if (sql.includes('INSERT INTO admin_audit_log')) {
+        auditWrites += 1;
+        return [{ insertId: auditWrites }, []];
+      }
       if (sql.includes('FROM reports WHERE id = ?')) {
         return [[{ id: 44, reporter_id: reportOwnerId, report_type: 'FOUND', title: 'Found notebook', category: 'Books', location: 'Main Library', event_date: '2026-11-17', status: 'OPEN' }], []];
       }
@@ -200,7 +206,7 @@ test('claims and admin APIs enforce ownership and state using isolated database 
     assert.equal(response.status, 200);
     const dashboard = await response.json();
     assert.equal(Number(dashboard.statistics.pendingClaims), 1);
-    assert.equal(Number(dashboard.statistics.totalAdmins), 2);
+    assert.equal(Number(dashboard.statistics.totalAdmins), 1);
     assert.equal(Number(dashboard.statistics.returnedItems), 2);
     assert.equal(dashboard.recentReports[0].title, 'Found notebook');
 
@@ -236,6 +242,7 @@ test('claims and admin APIs enforce ownership and state using isolated database 
     });
     assert.equal(response.status, 200);
     assert.equal(handoverUpdated, true);
+    assert.equal(auditWrites, 2, 'claim decisions and completed handovers are audited transactionally');
     assert.equal(connectionMock.mock.callCount(), 6);
     assert.ok(executeMock.mock.callCount() > 0);
   } finally {

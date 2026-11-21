@@ -10,6 +10,7 @@ import AccountActivityPage from './AccountActivityPage.jsx';
 import AdminDashboardPage from './AdminDashboardPage.jsx';
 import AdminClaimsPage from './AdminClaimsPage.jsx';
 import AdminUsersPage from './AdminUsersPage.jsx';
+import SuperAdminManagementPage from './SuperAdminManagementPage.jsx';
 
 const studentSections = [
   { id: 'personal', label: 'Personal information' },
@@ -23,6 +24,10 @@ const adminSections = [
   { id: 'admin-overview', label: 'Admin overview' },
   { id: 'admin-claims', label: 'Claims management' },
   { id: 'admin-users', label: 'Users management' }
+];
+const superAdminSections = [
+  ...adminSections,
+  { id: 'super-admin-management', label: 'Admin Management' }
 ];
 const emptySummary = { myReports: 0, myClaims: 0, foundItems: 0 };
 
@@ -90,8 +95,9 @@ export default function AccountPage() {
     return () => controller.abort();
   }, [user]);
 
-  const isAdmin = user?.role === 'ADMIN';
-  const sections = isAdmin ? adminSections : studentSections;
+  const isSuperAdmin = user?.role === 'SUPER_ADMIN';
+  const isAdmin = user?.role === 'ADMIN' || isSuperAdmin;
+  const sections = isSuperAdmin ? superAdminSections : isAdmin ? adminSections : studentSections;
   const requestedSection = searchParams.get('section');
   const activeSection = sections.some(({ id }) => id === requestedSection)
     ? requestedSection
@@ -119,7 +125,7 @@ export default function AccountPage() {
         <div><dt>Phone</dt><dd>{fieldValue(profile?.phone)}</dd></div>
         <div><dt>Student ID</dt><dd>{fieldValue(profile?.studentId)}</dd></div>
         <div><dt>Course</dt><dd>{fieldValue(profile?.course)}</dd></div>
-        <div><dt>Account type</dt><dd>{isAdmin ? 'Administrator' : 'Student'}</dd></div>
+        <div><dt>Account type</dt><dd>{isSuperAdmin ? 'Super administrator' : isAdmin ? 'Administrator' : 'Student'}</dd></div>
       </dl>
       {!loadingProfile && <p className="account-profile-note">Keep your contact details up to date so the campus team can reach you about an item.</p>}
     </section>,
@@ -129,7 +135,8 @@ export default function AccountPage() {
     activity: <AccountActivityPage />,
     'admin-overview': <AdminDashboardPage embedded />,
     'admin-claims': <AdminClaimsPage embedded />,
-    'admin-users': <AdminUsersPage embedded />
+    'admin-users': <AdminUsersPage embedded />,
+    'super-admin-management': isSuperAdmin ? <SuperAdminManagementPage /> : null
   }[activeSection];
 
   async function handleProfileSubmit(event) {
@@ -196,7 +203,7 @@ export default function AccountPage() {
             <span aria-hidden="true">{getInitials(name)}</span>
           </div>
           <strong>{name}</strong><span className="account-profile-email">{profile?.email || user?.email}</span>
-          <span className="account-role-pill">{isAdmin ? 'Administrator' : 'Student account'}</span>
+          <span className="account-role-pill">{isSuperAdmin ? 'Super administrator' : isAdmin ? 'Administrator' : 'Student account'}</span>
           <button className="account-profile-edit" type="button" onClick={openProfileEditor}>Edit profile</button>
         </section>
         <nav className="account-section-nav" aria-label="Account sections">

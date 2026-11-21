@@ -13,6 +13,7 @@ import {
   parsePositiveId,
   validateReviewNote
 } from '../services/claim-validation.js';
+import { writeAdminAudit } from '../services/admin-management.service.js';
 
 const router = Router();
 const claimStatuses = ['PENDING', 'APPROVED', 'REJECTED', 'WITHDRAWN'];
@@ -29,6 +30,9 @@ router.get('/dashboard', async (request, response, next) => {
 
     const [students] = await database.execute(
       "SELECT COUNT(*) AS total FROM users WHERE role = 'STUDENT'"
+    );
+    const [superAdmins] = await database.execute(
+      "SELECT COUNT(*) AS total FROM users WHERE role = 'SUPER_ADMIN'"
     );
 
     const [reports] = await database.execute(
@@ -73,7 +77,8 @@ router.get('/dashboard', async (request, response, next) => {
       statistics: {
         totalUsers: users[0].total,
         totalStudents: students[0].total,
-        totalAdmins: Number(users[0].total) - Number(students[0].total),
+        totalAdmins: Number(users[0].total) - Number(students[0].total) - Number(superAdmins[0].total),
+        totalSuperAdmins: Number(superAdmins[0].total),
         totalReports: reports[0].total,
         totalClaims: claims[0].total,
         pendingClaims: claims[0].pending ?? 0,
@@ -123,7 +128,7 @@ router.get('/users', async (request, response, next) => {
   if (search.length > 120) {
     return response.status(400).json({ message: 'Search must be 120 characters or fewer.' });
   }
-  const filters = [];
+  const filters = ["role <> 'SUPER_ADMIN'"];
   const values = [];
   if (role) {
     filters.push('role = ?');
@@ -141,7 +146,7 @@ router.get('/users', async (request, response, next) => {
       values
     );
     const [users] = await database.execute(
-      `SELECT id, full_name, email, role, created_at
+      `SELECT id, full_name, email, role, is_active, created_at
        FROM users${where}
        ORDER BY created_at DESC, id DESC
        LIMIT ? OFFSET ?`,
@@ -155,6 +160,7 @@ router.get('/users', async (request, response, next) => {
         fullName: user.full_name,
         email: user.email,
         role: user.role,
+        isActive: Boolean(user.is_active),
         registeredAt: user.created_at
       })),
       pagination: { page, limit, total, totalPages: Math.ceil(total / limit) }
@@ -346,6 +352,11 @@ router.patch('/claims/:id', async (request, response, next) => {
        WHERE id = ? AND status = 'PENDING'`,
       [nextStatus, request.user.id, request.body.reviewNote?.trim() || null, claimId]
     );
+    await writeAdminAudit(connection, request.user, null, 'claim.reviewed', {
+      claimId,
+      decision: nextStatus,
+      reportId: Number(rows[0].report_id)
+    });
     await connection.commit();
     return response.json({ message: `Claim ${nextStatus.toLowerCase()} successfully.`, claim: { id: claimId, status: nextStatus } });
   } catch (error) {
@@ -394,6 +405,10 @@ router.post('/claims/:id/complete', async (request, response, next) => {
        WHERE id = ? AND status = 'OPEN'`,
       [rows[0].report_id]
     );
+    await writeAdminAudit(connection, request.user, null, 'claim.handover_completed', {
+      claimId,
+      reportId: Number(rows[0].report_id)
+    });
     await connection.commit();
     return response.json({ message: 'Handover completed.', claim: { id: claimId, status: 'APPROVED' }, report: { id: rows[0].report_id, status: 'RETURNED' } });
   } catch (error) {

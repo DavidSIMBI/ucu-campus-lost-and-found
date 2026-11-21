@@ -20,7 +20,7 @@ export default function LoginPage() {
 
     try {
       const response = await login(email, password);
-      const destination = response.user?.role === 'ADMIN'
+      const destination = ['ADMIN', 'SUPER_ADMIN'].includes(response.user?.role)
         ? '/account?section=admin-overview'
         : location.state?.from?.pathname
           ? `${location.state.from.pathname}${location.state.from.search || ''}${location.state.from.hash || ''}`

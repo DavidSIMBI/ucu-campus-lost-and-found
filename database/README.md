@@ -20,9 +20,10 @@ From Windows PowerShell, run these (replace `root` if your MySQL administrator a
 cmd.exe /c "mysql -u root -p < database\migrations\20261119_add_claim_evidence_files.sql"
 cmd.exe /c "mysql -u root -p < database\migrations\20261119_add_report_photo_path.sql"
 cmd.exe /c "mysql -u root -p < database\migrations\20261120_add_user_profile_fields.sql"
+cmd.exe /c "mysql -u root -p < database\migrations\20261121_add_super_admin_permissions.sql"
 ```
 
-These migrations add claim justification and evidence-file storage fields, the report photo path, and editable student profile fields used by the current API.
+These migrations add claim justification and evidence-file storage fields, the report photo path, editable student profile fields, and the SUPER_ADMIN role, account status, governance lock, audit log, and allow-listed administrative settings. Apply them with an account that has schema-change privileges; they do not reset or delete existing users, reports, or claims.
 
 Do not use seed password hashes to authenticate: they are intentionally unusable.
 

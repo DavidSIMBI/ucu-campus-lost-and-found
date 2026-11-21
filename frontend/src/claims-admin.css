@@ -110,6 +110,27 @@
 .account-edit-wide,.account-edit-help,.account-edit-actions{grid-column:1 / -1}
 .account-edit-help{margin:0;color:var(--muted);font-size:11px;line-height:1.5}
 .account-photo-preview{grid-column:1 / -1;width:88px;height:88px;object-fit:cover;border-radius:50%;border:2px solid #d8e1da}
+.super-admin-tabs{display:flex;flex-wrap:wrap;gap:7px;margin:0 0 20px;border-bottom:1px solid var(--line)}
+.super-admin-tabs button,.super-admin-actions button{border:1px solid var(--line);border-radius:4px;background:#fff;padding:8px 11px;color:var(--ink);font:600 11px 'DM Sans',Arial,sans-serif;cursor:pointer}
+.super-admin-tabs button.active{border-color:var(--green);background:var(--green);color:#fff}
+.super-admin-create-form{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));align-items:end;gap:12px;margin:0 0 20px;padding:16px;border:1px solid var(--line);border-radius:6px;background:#f8faf8}
+.super-admin-create-form h3{grid-column:1/-1;margin:0;font:700 14px Manrope,'DM Sans',sans-serif}
+.super-admin-create-form label,.super-admin-search{display:grid;gap:6px;color:#43584d;font-size:11px;font-weight:700}
+.super-admin-create-form input,.super-admin-search input{width:100%;min-height:38px;border:1px solid #d8e1da;border-radius:4px;background:#fff;padding:8px 10px;color:var(--ink);font:400 12px 'DM Sans',Arial,sans-serif}
+.super-admin-create-form>.button{justify-self:start}
+.super-admin-search{max-width:380px;margin-bottom:14px}
+.super-admin-actions{display:flex;flex-wrap:wrap;gap:5px}
+.super-admin-actions button{padding:6px 8px;font-size:10px}
+.super-admin-actions button:disabled{opacity:.45;cursor:not-allowed}
+.status-pill{display:inline-flex;align-items:center;border:0;border-radius:999px;padding:5px 9px;font-size:10px;font-weight:700}
+.status-pill.is-active{background:#e3f3e9;color:#17683c}
+.status-pill.is-inactive{background:#f4e8e8;color:#8b3030}
+.super-admin-settings{display:grid;gap:10px}
+.super-admin-settings article{display:flex;align-items:center;justify-content:space-between;gap:15px;padding:14px;border:1px solid var(--line);border-radius:6px}
+.super-admin-settings h3{margin:0 0 4px;font:700 13px Manrope,'DM Sans',sans-serif}
+.super-admin-settings p{margin:0;color:var(--muted);font-size:11px}
+.super-admin-settings button{cursor:pointer}
+@media(max-width:700px){.super-admin-create-form{grid-template-columns:1fr}.super-admin-create-form h3{grid-column:1}.super-admin-settings article{align-items:flex-start;flex-direction:column}}
 .account-edit-actions{display:flex;justify-content:flex-end;gap:9px;padding-top:5px}
 .account-edit-cancel{border:1px solid var(--line);background:#fff;color:var(--ink)}
 .account-edit-cancel:hover{background:#f4f6f4}
@@ -900,6 +921,7 @@
 .role-chip{border-radius:3px;font-size:9px;letter-spacing:.025em}
 .role-chip-student{background:#eaf2eb;color:#356344}
 .role-chip-admin{background:#f8f2e5;color:#80652b}
+.role-chip-super_admin{background:#eee8f6;color:#5c3b79}
 @media(max-width:1024px){
   .admin-workspace .admin-dashboard-content{padding:24px 20px}
   .admin-claim-detail-grid{grid-template-columns:minmax(0,1fr)}

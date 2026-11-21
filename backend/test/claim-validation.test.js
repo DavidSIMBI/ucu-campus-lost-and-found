@@ -12,7 +12,7 @@ import {
   validateJustification,
   validateReviewNote
 } from '../src/services/claim-validation.js';
-import { adminOnly, studentOnly } from '../src/middleware/auth.middleware.js';
+import { adminOnly, studentOnly, superAdminOnly } from '../src/middleware/auth.middleware.js';
 
 test('parses only positive safe integer IDs', () => {
   assert.equal(parsePositiveId('42'), 42);
@@ -47,6 +47,7 @@ test('evidence access is limited to its owner or an administrator', () => {
   assert.equal(canAccessEvidence('STUDENT', '12', 12), true);
   assert.equal(canAccessEvidence('STUDENT', 13, 12), false);
   assert.equal(canAccessEvidence('ADMIN', 13, 12), true);
+  assert.equal(canAccessEvidence('SUPER_ADMIN', 13, 12), true);
 });
 
 test('claim decisions and handover follow the allowed state transitions', () => {
@@ -88,6 +89,19 @@ test('review authorization middleware rejects students and allows admins', () =>
   assert.equal(continued, false);
 
   adminOnly({ user: { role: 'ADMIN' } }, response, () => { continued = true; });
+  assert.equal(continued, true);
+
+  continued = false;
+  adminOnly({ user: { role: 'SUPER_ADMIN' } }, response, () => { continued = true; });
+  assert.equal(continued, true);
+
+  continued = false;
+  superAdminOnly({ user: { role: 'ADMIN' } }, response, () => { continued = true; });
+  assert.equal(response.statusCode, 403);
+  assert.equal(continued, false);
+
+  continued = false;
+  superAdminOnly({ user: { role: 'SUPER_ADMIN' } }, response, () => { continued = true; });
   assert.equal(continued, true);
 
   continued = false;

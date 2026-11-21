@@ -6,6 +6,7 @@ import authRoutes from './routes/auth.routes.js';
 import reportRoutes from './routes/reports.routes.js';
 import claimRoutes from './routes/claims.routes.js';
 import adminRoutes from './routes/admin.routes.js';
+import superAdminRoutes from './routes/super-admin.routes.js';
 import { notFound, errorHandler } from './middleware/error-handler.js';
 
 const app = express();
@@ -31,6 +32,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/claims', claimRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/super-admin', superAdminRoutes);
 
 app.use(notFound);
 app.use(errorHandler);

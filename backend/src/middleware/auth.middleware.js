@@ -78,7 +78,7 @@ export async function authenticate(request, response, next) {
       !Number.isSafeInteger(Number(payload.sub)) ||
       !Number.isInteger(payload.exp) ||
       payload.exp <= Math.floor(Date.now() / 1000) ||
-      !['STUDENT', 'ADMIN'].includes(payload.role) ||
+      !['STUDENT', 'ADMIN', 'SUPER_ADMIN'].includes(payload.role) ||
       !Number.isInteger(payload.ver)
     ) {
       return response.status(401).json({
@@ -88,7 +88,7 @@ export async function authenticate(request, response, next) {
 
     // Check the current account and token version in MySQL
     const [rows] = await database.execute(
-      `SELECT id, role, token_version
+      `SELECT id, role, token_version, is_active
        FROM users
        WHERE id = ?
        LIMIT 1`,
@@ -100,7 +100,8 @@ export async function authenticate(request, response, next) {
     if (
       !user ||
       user.role !== payload.role ||
-      user.token_version !== payload.ver
+      Number(user.token_version) !== payload.ver ||
+      !Boolean(user.is_active)
     ) {
       return response.status(401).json({
         message: 'Your session is no longer valid. Please log in again.'
@@ -109,7 +110,9 @@ export async function authenticate(request, response, next) {
 
     request.user = {
       id: Number(user.id),
-      role: user.role
+      role: user.role,
+      tokenVersion: Number(user.token_version),
+      isActive: Boolean(user.is_active)
     };
 
     next();
@@ -138,7 +141,8 @@ export function requireRole(...allowedRoles) {
 }
 
 // Admin-only access
-export const adminOnly = requireRole('ADMIN');
+export const adminOnly = requireRole('ADMIN', 'SUPER_ADMIN');
+export const superAdminOnly = requireRole('SUPER_ADMIN');
 
 // Student-only access
 export const studentOnly = requireRole('STUDENT');
