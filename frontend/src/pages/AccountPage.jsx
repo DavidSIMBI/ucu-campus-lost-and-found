@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import { api } from '../services/api.js';
+import { getReportPhotoUrl, validateReportPhoto } from '../services/reportPhoto.js';
 import StudentDashboardPage from './StudentDashboardPage.jsx';
 import MyReportsPage from './MyReportsPage.jsx';
 import MyClaimsPage from './MyClaimsPage.jsx';
@@ -50,7 +51,14 @@ export default function AccountPage() {
   const [saveMessage, setSaveMessage] = useState('');
   const [saveError, setSaveError] = useState('');
   const [photoFailed, setPhotoFailed] = useState(false);
+  const [profilePhotoFile, setProfilePhotoFile] = useState(null);
+  const [profilePhotoPreview, setProfilePhotoPreview] = useState('');
+  const [profilePhotoError, setProfilePhotoError] = useState('');
   const [draft, setDraft] = useState({ fullName: '', phone: '', studentId: '', course: '', profilePhotoUrl: '' });
+
+  useEffect(() => () => {
+    if (profilePhotoPreview.startsWith('blob:')) URL.revokeObjectURL(profilePhotoPreview);
+  }, [profilePhotoPreview]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -94,11 +102,14 @@ export default function AccountPage() {
   }, [activeSection, requestedSection, setSearchParams]);
 
   const name = profile?.fullName || user?.fullName || 'Account holder';
+  const profileImageUrl = profile?.profilePhotoUrl?.startsWith('/uploads/reports/')
+    ? getReportPhotoUrl(profile.profilePhotoUrl)
+    : profile?.profilePhotoUrl;
   const content = {
     personal: <section className="account-personal-panel" aria-labelledby="account-personal-title">
       <div className="account-panel-heading">
         <div><p className="section-label">Your profile</p><h2 id="account-personal-title">Personal information</h2></div>
-        <button className="button button-small account-edit-trigger" type="button" onClick={() => { setSaveError(''); setSaveMessage(''); setIsEditing(true); }}>Edit profile</button>
+        <button className="button button-small account-edit-trigger" type="button" onClick={openProfileEditor}>Edit profile</button>
       </div>
       {profileError && <p className="module-feedback module-feedback-error" role="alert">{profileError}</p>}
       {saveMessage && <p className="module-feedback module-feedback-success" role="status">{saveMessage}</p>}
@@ -127,9 +138,18 @@ export default function AccountPage() {
     setSaveError('');
     setSaveMessage('');
     try {
-      const result = await updateProfile(draft);
+      let profilePayload = draft;
+      if (profilePhotoFile) {
+        profilePayload = new FormData();
+        Object.entries(draft).forEach(([key, value]) => profilePayload.append(key, value));
+        profilePayload.append('photo', profilePhotoFile);
+      }
+      const result = await updateProfile(profilePayload);
       setProfile(result.user);
       setIsEditing(false);
+      setProfilePhotoFile(null);
+      setProfilePhotoPreview('');
+      setProfilePhotoError('');
       setPhotoFailed(false);
       setSaveMessage('Your profile has been updated.');
     } catch (error) {
@@ -137,6 +157,23 @@ export default function AccountPage() {
     } finally {
       setSaving(false);
     }
+  }
+
+  function openProfileEditor() {
+    setSaveError('');
+    setSaveMessage('');
+    setProfilePhotoFile(null);
+    setProfilePhotoPreview('');
+    setProfilePhotoError('');
+    setIsEditing(true);
+  }
+
+  function handleProfilePhotoChange(event) {
+    const file = event.target.files?.[0] || null;
+    const validationError = validateReportPhoto(file);
+    setProfilePhotoError(validationError);
+    setProfilePhotoFile(validationError ? null : file);
+    setProfilePhotoPreview(!validationError && file ? URL.createObjectURL(file) : '');
   }
 
   return <section className="account-page section-shell">
@@ -155,12 +192,12 @@ export default function AccountPage() {
       <aside className="account-sidebar" aria-label="Account navigation">
         <section className="account-profile-card" aria-label="Profile summary">
           <div className={`account-avatar${photoFailed ? ' account-avatar-fallback' : ''}`}>
-            {profile?.profilePhotoUrl && !photoFailed && <img src={profile.profilePhotoUrl} alt="" onError={() => setPhotoFailed(true)} />}
+            {profileImageUrl && !photoFailed && <img src={profileImageUrl} alt="" onError={() => setPhotoFailed(true)} />}
             <span aria-hidden="true">{getInitials(name)}</span>
           </div>
           <strong>{name}</strong><span className="account-profile-email">{profile?.email || user?.email}</span>
           <span className="account-role-pill">{isAdmin ? 'Administrator' : 'Student account'}</span>
-          <button className="account-profile-edit" type="button" onClick={() => { setSaveError(''); setSaveMessage(''); setIsEditing(true); }}>Edit profile</button>
+          <button className="account-profile-edit" type="button" onClick={openProfileEditor}>Edit profile</button>
         </section>
         <nav className="account-section-nav" aria-label="Account sections">
           {sections.map(({ id, label }) => <button key={id} type="button" className={`account-section-tab${activeSection === id ? ' active' : ''}`} aria-current={activeSection === id ? 'page' : undefined} onClick={() => setSearchParams({ section: id })}>{label}</button>)}
@@ -180,8 +217,10 @@ export default function AccountPage() {
           <label>Phone<input type="tel" maxLength="30" value={draft.phone} onChange={(event) => setDraft({ ...draft, phone: event.target.value })} autoComplete="tel" placeholder="e.g. +256 700 000000" /></label>
           <label>Student ID<input maxLength="40" value={draft.studentId} onChange={(event) => setDraft({ ...draft, studentId: event.target.value })} /></label>
           <label>Course<input maxLength="120" value={draft.course} onChange={(event) => setDraft({ ...draft, course: event.target.value })} placeholder="e.g. Bachelor of Science in Computer Science" /></label>
-          <label className="account-edit-wide">Profile photo URL<input type="url" maxLength="2048" value={draft.profilePhotoUrl} onChange={(event) => setDraft({ ...draft, profilePhotoUrl: event.target.value })} placeholder="https://example.com/photo.jpg" /></label>
-          <p className="account-edit-help">Adding contact and course details can help campus staff return an item to you.</p>
+          <label className="account-edit-wide">Upload a profile photo from your gallery<input type="file" accept="image/jpeg,image/png,image/webp" onChange={handleProfilePhotoChange} /></label>
+          {profilePhotoPreview && <img className="account-photo-preview" src={profilePhotoPreview} alt="Selected profile photo preview" />}
+          {profilePhotoError && <p className="module-feedback module-feedback-error account-edit-wide" role="alert">{profilePhotoError}</p>}
+          <p className="account-edit-help">Choose a JPEG, PNG or WebP photo up to 5 MB. Adding contact and course details can help campus staff return an item to you.</p>
           <div className="account-edit-actions"><button className="button button-small account-edit-cancel" type="button" disabled={saving} onClick={() => setIsEditing(false)}>Cancel</button><button className="button button-small" type="submit" disabled={saving}>{saving ? 'Saving…' : 'Save changes'}</button></div>
         </form>
       </section>

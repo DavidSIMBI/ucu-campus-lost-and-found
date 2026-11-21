@@ -1,5 +1,5 @@
 
-import { createContext, useContext, useState } from 'react';
+import { createContext, useContext, useEffect, useState } from 'react';
 import { api } from '../services/api.js';
 
 const AuthContext = createContext(null);
@@ -16,6 +16,16 @@ export function AuthProvider({ children }) {
   const [token, setToken] = useState(
     () => localStorage.getItem('token') || null
   );
+
+  useEffect(() => {
+    const clearSession = () => {
+      setToken(null);
+      setUser(null);
+    };
+
+    window.addEventListener('auth:unauthorized', clearSession);
+    return () => window.removeEventListener('auth:unauthorized', clearSession);
+  }, []);
 
   const saveSession = (data) => {
     localStorage.setItem('token', data.token);

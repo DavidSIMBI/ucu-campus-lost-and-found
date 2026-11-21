@@ -9,6 +9,13 @@ import {
 import bcrypt from 'bcryptjs';
 import { database } from '../config/database.js';
 import { authenticate } from '../middleware/auth.middleware.js';
+import {
+  deleteStoredReportPhoto,
+  prepareReportPhoto,
+  publicReportPhotoPath,
+  reportPhotoUpload,
+  storePreparedReportPhoto
+} from '../services/report-photo.service.js';
 
 const router = Router();
 const scrypt = promisify(scryptCallback);
@@ -259,7 +266,7 @@ router.get('/me', authenticate, async (request, response, next) => {
   }
 });
 
-router.patch('/profile', authenticate, async (request, response, next) => {
+router.patch('/profile', authenticate, reportPhotoUpload, async (request, response, next) => {
   const body = request.body;
   const allowedFields = ['fullName', 'phone', 'studentId', 'course', 'profilePhotoUrl'];
   if (!body || typeof body !== 'object' || Array.isArray(body) ||
@@ -272,36 +279,41 @@ router.patch('/profile', authenticate, async (request, response, next) => {
   const phone = typeof body.phone === 'string' ? body.phone.trim() : '';
   const studentId = typeof body.studentId === 'string' ? body.studentId.trim() : '';
   const course = typeof body.course === 'string' ? body.course.trim() : '';
-  const profilePhotoUrl = typeof body.profilePhotoUrl === 'string' ? body.profilePhotoUrl.trim() : '';
+  const submittedProfilePhotoUrl = request.file
+    ? ''
+    : typeof body.profilePhotoUrl === 'string' ? body.profilePhotoUrl.trim() : '';
+  let profilePhotoUrl = submittedProfilePhotoUrl;
 
   if (fullName.length < 2 || fullName.length > 120) {
     return response.status(400).json({ message: 'Enter a name between 2 and 120 characters.' });
   }
-  if (phone.length > 30 || studentId.length > 40 || course.length > 120 || profilePhotoUrl.length > 2048) {
+  if (phone.length > 30 || studentId.length > 40 || course.length > 120 || submittedProfilePhotoUrl.length > 2048) {
     return response.status(400).json({ message: 'One or more profile fields are too long.' });
   }
-  if (profilePhotoUrl) {
+  if (submittedProfilePhotoUrl) {
     try {
-      const url = new URL(profilePhotoUrl);
+      const url = new URL(submittedProfilePhotoUrl);
       if (!['http:', 'https:'].includes(url.protocol)) throw new Error('Invalid scheme');
     } catch {
       return response.status(400).json({ message: 'Enter a valid HTTP or HTTPS profile photo URL.' });
     }
   }
 
+  let storedPhotoFilename = null;
+  let profileUpdateCommitted = false;
   try {
     const columns = await getProfileColumns();
     const valuesByColumn = {
       phone: phone || null,
       student_id: studentId || null,
       course: course || null,
-      profile_photo_url: profilePhotoUrl || null
+      profile_photo_url: submittedProfilePhotoUrl || null
     };
     const requestedProfileValues = {
       phone,
       student_id: studentId,
       course,
-      profile_photo_url: profilePhotoUrl
+      profile_photo_url: request.file ? 'uploaded photo' : submittedProfilePhotoUrl
     };
     const missingFields = Object.entries(requestedProfileValues)
       .filter(([column, value]) => value && !columns.has(column))
@@ -309,8 +321,16 @@ router.patch('/profile', authenticate, async (request, response, next) => {
 
     if (missingFields.length) {
       return response.status(409).json({
-        message: 'These profile fields are not available yet, so your changes were not saved. Contact the system administrator.'
+        message: 'The profile database migration is missing. Ask an administrator to apply database/migrations/20261120_add_user_profile_fields.sql, then try again.'
       });
+    }
+
+    const previousProfile = await getUserProfile(request.user.id, columns);
+    if (request.file) {
+      const preparedPhoto = await prepareReportPhoto(request.file);
+      storedPhotoFilename = await storePreparedReportPhoto(preparedPhoto);
+      profilePhotoUrl = publicReportPhotoPath(storedPhotoFilename);
+      valuesByColumn.profile_photo_url = profilePhotoUrl;
     }
 
     const updates = ['full_name = ?'];
@@ -324,9 +344,16 @@ router.patch('/profile', authenticate, async (request, response, next) => {
     values.push(request.user.id);
 
     await database.execute(`UPDATE users SET ${updates.join(', ')} WHERE id = ?`, values);
+    profileUpdateCommitted = true;
     const user = await getUserProfile(request.user.id, columns);
+    if (storedPhotoFilename && previousProfile?.profile_photo_url?.startsWith('/uploads/reports/')) {
+      await deleteStoredReportPhoto(previousProfile.profile_photo_url.slice('/uploads/reports/'.length));
+    }
     return response.json({ user: publicUser(user), message: 'Profile updated successfully.' });
   } catch (error) {
+    if (storedPhotoFilename && !profileUpdateCommitted) {
+      await deleteStoredReportPhoto(storedPhotoFilename).catch(() => {});
+    }
     return next(error);
   }
 });
