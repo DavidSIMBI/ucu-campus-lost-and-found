@@ -11,6 +11,7 @@ import AdminDashboardPage from './AdminDashboardPage.jsx';
 import AdminClaimsPage from './AdminClaimsPage.jsx';
 import AdminUsersPage from './AdminUsersPage.jsx';
 import SuperAdminManagementPage from './SuperAdminManagementPage.jsx';
+import AdminThemeProvider from '../theme/AdminThemeProvider.jsx';
 
 const studentSections = [
   { id: 'personal', label: 'Personal information' },
@@ -183,7 +184,7 @@ export default function AccountPage() {
     setProfilePhotoPreview(!validationError && file ? URL.createObjectURL(file) : '');
   }
 
-  return <section className="account-page section-shell">
+  const accountContent = <section className="account-page section-shell">
     <header className="account-welcome">
       <div><p className="section-label">{isAdmin ? 'Administrator account' : 'Student account'}</p><h1>My Account</h1><p className="page-intro">Welcome, {name}. View your profile, reports, and campus activity.</p></div>
       <Link className="button button-small" to={isAdmin ? '/admin/claims' : '/report'}>{isAdmin ? 'Review claims' : 'Create a report'}</Link>
@@ -233,4 +234,8 @@ export default function AccountPage() {
       </section>
     </div>}
   </section>;
+
+  return isAdmin
+    ? <AdminThemeProvider>{accountContent}</AdminThemeProvider>
+    : accountContent;
 }

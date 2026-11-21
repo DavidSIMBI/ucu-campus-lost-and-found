@@ -83,7 +83,7 @@ From `frontend/`:
 npm run dev
 ```
 
-Open the local URL printed by Vite, usually `http://localhost:5173`. The frontend API base URL defaults to `http://localhost:5000/api`; set `VITE_API_BASE_URL` in `frontend/.env` to override it.
+Open the local URL printed by Vite, usually `http://localhost:5173`. During development, API requests use the same-origin `/api` path and report images use `/uploads`; Vite proxies both to the backend origin configured by `VITE_API_URL` or `VITE_API_BASE_URL` (default `http://localhost:5000/api`). Production builds use that configured API base URL directly. Keep the backend's `FRONTEND_ORIGIN` set to the exact frontend origin; multiple explicit origins can be comma-separated.
 
 ## Documentation
 
