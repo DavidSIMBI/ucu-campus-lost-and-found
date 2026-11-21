@@ -54,7 +54,7 @@ test('public report listings include Lost and Found reports without private fiel
 
     const privateResponse = await fetch(`${base}/api/reports/mine`);
     assert.equal(privateResponse.status, 401, 'existing private report routes remain authenticated');
-    assert.equal(executeMock.mock.callCount(), 1);
+    assert.equal(executeMock.mock.callCount(), 2, 'public listing checks photo-column compatibility before querying reports');
   } finally {
     await new Promise((resolve) => server.close(resolve));
     mock.restoreAll();

@@ -18,6 +18,7 @@ function getInitials(fullName) {
 }
 
 function getRoleLabel(role) {
+  if (role === 'SUPER_ADMIN') return 'Super administrator';
   if (role === 'ADMIN') return 'Administrator';
   if (role === 'STUDENT') return 'Student';
   return 'Account';

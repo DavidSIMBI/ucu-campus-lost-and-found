@@ -9,6 +9,7 @@ import {
 import bcrypt from 'bcryptjs';
 import { database } from '../config/database.js';
 import { authenticate } from '../middleware/auth.middleware.js';
+import { requireEnabledSetting } from '../services/admin-settings.service.js';
 import {
   deleteStoredReportPhoto,
   prepareReportPhoto,
@@ -31,6 +32,7 @@ function publicUser(user) {
     fullName: user.full_name,
     email: user.email,
     role: user.role,
+    isActive: user.is_active === undefined ? true : Boolean(user.is_active),
     phone: user.phone ?? null,
     studentId: user.student_id ?? null,
     course: user.course ?? null,
@@ -54,7 +56,7 @@ async function getUserProfile(userId, columns = null) {
   const available = columns ?? await getProfileColumns();
   const selectOptional = (column) => available.has(column) ? column : `NULL AS ${column}`;
   const [rows] = await database.execute(
-    `SELECT id, full_name, email, role,
+    `SELECT id, full_name, email, role, is_active,
             ${selectOptional('phone')},
             ${selectOptional('student_id')},
             ${selectOptional('course')},
@@ -135,7 +137,10 @@ function signToken(user) {
 }
 
 // STUDENT REGISTRATION
-router.post('/register', async (request, response, next) => {
+router.post('/register', requireEnabledSetting(
+  'student_registration_enabled',
+  'New student registration is temporarily disabled.'
+), async (request, response, next) => {
   const fullName =
     typeof request.body.fullName === 'string'
       ? request.body.fullName.trim()
@@ -173,8 +178,8 @@ router.post('/register', async (request, response, next) => {
     const passwordHash = await hashPassword(password);
 
     const [result] = await database.execute(
-      `INSERT INTO users (full_name, email, password_hash)
-       VALUES (?, ?, ?)`,
+      `INSERT INTO users (full_name, email, password_hash, role, is_active)
+       VALUES (?, ?, ?, 'STUDENT', TRUE)`,
       [fullName, email, passwordHash]
     );
 
@@ -183,6 +188,7 @@ router.post('/register', async (request, response, next) => {
       full_name: fullName,
       email,
       role: 'STUDENT',
+      is_active: true,
       token_version: 0
     };
 
@@ -221,7 +227,7 @@ router.post('/login', async (request, response, next) => {
 
   try {
     const [rows] = await database.execute(
-      `SELECT id, full_name, email, password_hash, role, token_version
+      `SELECT id, full_name, email, password_hash, role, is_active, token_version
        FROM users
        WHERE email = ?
        LIMIT 1`,
@@ -232,6 +238,7 @@ router.post('/login', async (request, response, next) => {
 
     if (
       !user ||
+      !Boolean(user.is_active) ||
       !(await verifyPassword(password, user.password_hash))
     ) {
       return response.status(401).json({

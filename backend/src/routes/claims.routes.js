@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { database } from '../config/database.js';
 import { authenticate, studentOnly } from '../middleware/auth.middleware.js';
+import { requireEnabledSetting } from '../services/admin-settings.service.js';
 import { parseClaimEvidence } from '../middleware/claim-evidence-upload.js';
 import {
   getEvidenceStorageDirectory,
@@ -52,7 +53,10 @@ function toClaim(row) {
   };
 }
 
-router.post('/', studentOnly, parseClaimEvidence, async (request, response, next) => {
+router.post('/', studentOnly, requireEnabledSetting(
+  'claim_submissions_enabled',
+  'New claim submissions are temporarily disabled.'
+), parseClaimEvidence, async (request, response, next) => {
   const reportId = parsePositiveId(request.body?.reportId);
   const justificationError = validateJustification(request.body?.justification);
   const files = request.files ?? [];

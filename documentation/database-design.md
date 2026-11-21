@@ -26,6 +26,8 @@ claims 1 ─── * claim_status_history
 
 Stores the user's name, unique email, password hash, role, active state, and token version. Store only slow password hashes, never plaintext passwords. Seed accounts use intentionally unusable fictional hashes.
 
+The role enum is `STUDENT`, `ADMIN`, or `SUPER_ADMIN`. Public registration assigns STUDENT explicitly. `is_active` blocks inactive accounts at login and on every authenticated request; role or status changes increment `token_version` to revoke existing sessions. Sensitive administrator actions are recorded in `admin_audit_log`, while `admin_governance_lock` serializes bootstrap and last-Super-Admin checks.
+
 ### `reports`
 
 Stores public listing data, reporter, type (`LOST` or `FOUND`), category, location, optional `photo_path`, event date, and lifecycle status (`OPEN`, `RETURNED`, or `CLOSED`). The nullable `returned_by` and `returned_at` fields capture administrator identity and collection confirmation time. `closed_at` records closure time. A check constraint keeps these timestamps consistent with the status. Photo paths should refer to managed storage; do not store image binary data in this table.

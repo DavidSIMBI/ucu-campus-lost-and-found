@@ -53,16 +53,16 @@ npm run dev
 
 The API starts at `http://localhost:5000`. The health endpoint is `http://localhost:5000/api/health`.
 
-## Create an administrator account
+## Bootstrap Super Admin access
 
-Administrator accounts are created from the backend terminal, not through public registration. First set up the database schema and backend `.env`, then run:
+Apply the database migrations as a trusted database administrator, configure `backend/.env`, then bootstrap the first Super Admin from an interactive backend terminal:
 
 ```bash
 cd backend
-npm run admin:create
+npm run super-admin:bootstrap
 ```
 
-Enter the administrator name, email, and password when prompted. The password is hidden while you type. Administrators sign in at `/login`; their role opens the administration workspace, and administration API routes require an active `ADMIN` account.
+The script prompts for a name, email and hidden password, hashes it with bcrypt, and refuses to run after a Super Admin exists. After bootstrap, Super Admins create ADMIN accounts through the Admin Management section. Public registration always creates STUDENT accounts.
 
 ## Set up MySQL
 
