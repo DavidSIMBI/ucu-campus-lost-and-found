@@ -60,3 +60,38 @@ test('public report listings include Lost and Found reports without private fiel
     mock.restoreAll();
   }
 });
+
+test('public report details return the requested open report without authentication', async () => {
+  const report = {
+    id: 21,
+    report_type: 'LOST',
+    title: 'Lost student card',
+    description: 'Blue student card.',
+    category: 'Accessories',
+    location: 'Library',
+    event_date: '2026-11-20',
+    photo_path: null,
+    status: 'OPEN',
+    created_at: '2026-11-20T12:00:00.000Z'
+  };
+  const executeMock = mock.method(database, 'execute', async (sql, values = []) => {
+    if (String(sql).includes('information_schema.COLUMNS')) return [[{ present: 1 }], []];
+    assert.deepEqual(values, [21]);
+    assert.match(sql, /WHERE r\.id = \? AND r\.status <> 'CLOSED'/);
+    assert.doesNotMatch(sql, /reporter_name|full_name|JOIN users/i);
+    return [[report], []];
+  });
+  const server = app.listen(0, '127.0.0.1');
+  await new Promise((resolve) => server.once('listening', resolve));
+  const base = `http://127.0.0.1:${server.address().port}`;
+
+  try {
+    const response = await fetch(`${base}/api/reports/public/21`);
+    assert.equal(response.status, 200);
+    assert.deepEqual((await response.json()).report, report);
+    assert.equal(executeMock.mock.callCount(), 2);
+  } finally {
+    await new Promise((resolve) => server.close(resolve));
+    mock.restoreAll();
+  }
+});

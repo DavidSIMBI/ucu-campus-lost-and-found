@@ -12,9 +12,7 @@ export default function ItemCard({ item }) {
     ? new Intl.DateTimeFormat(undefined, { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(`${rawDate}T00:00:00`))
     : rawDate;
   const status = item.status?.toUpperCase();
-  const detailsHref = item.photo_path && reportType === 'FOUND'
-    ? `/found-items/${item.id}`
-    : `/items?search=${encodeURIComponent(item.title || '')}`;
+  const detailsHref = `/items/${item.id}`;
 
   return (
     <article className="item-card">

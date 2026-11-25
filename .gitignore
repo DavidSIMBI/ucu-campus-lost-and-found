@@ -6,6 +6,7 @@ dist/
 build/
 coverage/
 backend/storage/private/
+backend/storage/reports/
 *.log
 backend/uploads/reports/
 .DS_Store

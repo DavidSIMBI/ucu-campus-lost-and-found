@@ -29,6 +29,6 @@ if (!Number.isInteger(port) || port < 1 || port > 65535) {
   process.exit(1);
 }
 
-app.listen(port, () => {
+app.listen(port, '0.0.0.0', () => {
   console.log(`UCU Lost and Found API listening on port ${port}`);
 });

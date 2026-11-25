@@ -3,6 +3,7 @@ import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import Layout from './components/Layout.jsx';
 import HomePage from './pages/HomePage.jsx';
 import BrowsePage from './pages/BrowsePage.jsx';
+import ReportDetailPage from './pages/ReportDetailPage.jsx';
 import LoginPage from './pages/LoginPage.jsx';
 import RegisterPage from './pages/RegisterPage.jsx';
 import ReportPage from './pages/ReportPage.jsx';
@@ -53,6 +54,7 @@ export default function App() {
       <Route element={<Layout />}>
         <Route path="/" element={<HomePage />} />
         <Route path="/items" element={<BrowsePage />} />
+        <Route path="/items/:id" element={<ReportDetailPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
 

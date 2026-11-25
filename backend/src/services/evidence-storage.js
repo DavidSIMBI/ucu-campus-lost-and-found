@@ -1,6 +1,7 @@
 import { randomBytes } from 'node:crypto';
 import { mkdir, readFile, unlink, writeFile } from 'node:fs/promises';
 import path from 'node:path';
+import { REPORT_PHOTO_DIRECTORY } from '../config/report-storage.js';
 
 export const MAX_EVIDENCE_FILES = 5;
 export const MAX_EVIDENCE_FILE_SIZE = 5 * 1024 * 1024;
@@ -85,10 +86,10 @@ export function getEvidenceStorageDirectory() {
     path.resolve(process.cwd(), '../frontend/public')
   ];
 
-  for (const publicRoot of publicRoots) {
+  for (const publicRoot of [...publicRoots, REPORT_PHOTO_DIRECTORY]) {
     const relative = path.relative(publicRoot, resolved);
     if (relative === '' || (!relative.startsWith(`..${path.sep}`) && relative !== '..' && !path.isAbsolute(relative))) {
-      throw new Error('Claim evidence storage must be outside public directories.');
+      throw new Error('Claim evidence storage must be outside public directories and report photo storage.');
     }
   }
 

@@ -5,6 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import {
   getDeclaredEvidenceMime,
+  getEvidenceStorageDirectory,
   getEvidenceStoragePath,
   isValidStorageKey,
   MAX_EVIDENCE_FILE_SIZE,
@@ -14,6 +15,7 @@ import {
   storeEvidenceBuffer,
   validateEvidenceFile
 } from '../src/services/evidence-storage.js';
+import { REPORT_PHOTO_DIRECTORY } from '../src/config/report-storage.js';
 
 const signatures = {
   jpg: Buffer.from([0xff, 0xd8, 0xff, 0x00]),
@@ -44,6 +46,20 @@ test('sanitizes display filenames and rejects path traversal storage keys', () =
   assert.equal(sanitizeOriginalFilename('..\\..\\'), 'evidence');
   assert.equal(isValidStorageKey('../proof.pdf'), false);
   assert.throws(() => getEvidenceStoragePath('../proof.pdf', path.join(os.tmpdir(), 'evidence-test')));
+});
+
+test('allows Railway private storage and rejects evidence paths served as report photos', () => {
+  const previous = process.env.CLAIM_EVIDENCE_STORAGE_DIR;
+  try {
+    process.env.CLAIM_EVIDENCE_STORAGE_DIR = '/app/storage/private/claims';
+    assert.equal(getEvidenceStorageDirectory(), '/app/storage/private/claims');
+
+    process.env.CLAIM_EVIDENCE_STORAGE_DIR = path.join(REPORT_PHOTO_DIRECTORY, 'private');
+    assert.throws(getEvidenceStorageDirectory, /outside public directories and report photo storage/);
+  } finally {
+    if (previous === undefined) delete process.env.CLAIM_EVIDENCE_STORAGE_DIR;
+    else process.env.CLAIM_EVIDENCE_STORAGE_DIR = previous;
+  }
 });
 
 test('stores evidence under randomized keys and removes only validated keys', async () => {

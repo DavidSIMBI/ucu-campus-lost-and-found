@@ -60,6 +60,46 @@ router.get('/public', async (_request, response, next) => {
   }
 });
 
+router.get('/public/:id', async (request, response, next) => {
+  const reportId = isValidReportId(request.params.id);
+  if (!reportId) {
+    return response.status(400).json({ message: 'Invalid report ID.' });
+  }
+
+  try {
+    const photoSelect = (await hasReportPhotoColumn())
+      ? reportPhotoSelect('r')
+      : 'NULL AS photo_path';
+    const [reports] = await database.execute(
+      `
+        SELECT
+          r.id,
+          r.report_type,
+          r.title,
+          r.description,
+          r.category,
+          r.location,
+          DATE_FORMAT(r.event_date, '%Y-%m-%d') AS event_date,
+          ${photoSelect},
+          r.status,
+          r.created_at
+        FROM reports r
+        WHERE r.id = ? AND r.status <> 'CLOSED'
+        LIMIT 1
+      `,
+      [reportId]
+    );
+
+    if (!reports.length) {
+      return response.status(404).json({ message: 'Report not found.' });
+    }
+
+    return response.json({ report: reports[0] });
+  } catch (error) {
+    return next(error);
+  }
+});
+
 router.use(authenticate);
 
 function exceedsMysqlTextLimit(value) {
